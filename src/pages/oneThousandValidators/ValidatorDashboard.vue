@@ -46,6 +46,14 @@
                   </td>
                 </tr>
                 <tr>
+                  <td style="text-align: left">Monthly APY (Active)</td>
+                  <td>
+                    <div class="d-flex flex-row">
+                      {{monthlyApy.toFixed(2)}} %
+                    </div>
+                  </td>
+                </tr>
+                <tr>
                   <td style="text-align: left">Unclaimed Payout Eras</td>
                   <td>
                     <div class="d-flex flex-row">
@@ -246,6 +254,8 @@ export default {
     this.nominatorCounts = [];
     this.commissions = [];
     this.apyTrend = [];
+    this.monthlyApy = 0;
+    this.monthlyApyCount = 0;
     const data = validatorHistory.data[0];
     if(data.identity !== undefined) {
       console.log(data.identity);
@@ -253,7 +263,8 @@ export default {
         this.displayName = data.identity.display;
       }
     }
-    data.info.forEach((eraData)=>{
+    const infoLength = data.info.length;
+    data.info.forEach((eraData, i)=>{
       this.xaxisCatagory.push(eraData.era.toString());
       this.nominatorCounts.push(eraData.nominators.length);
       this.exposures.push(eraData.exposure.others.length);
@@ -267,7 +278,30 @@ export default {
         return 0;
       });
       this.apyTrend.push(eraData.apy * 100);
+      if(this.coinName === 'KSM') {
+        if(infoLength - i <= 120) { //recent 120 eras
+          if(eraData.apy > 0) {
+            this.monthlyApy += eraData.apy * 100;
+            this.monthlyApyCount++;
+          }
+        }
+      } else {
+        if(infoLength - i <= 30) { //recent 30 eras
+          if(eraData.apy > 0) {
+            this.monthlyApy += eraData.apy * 100;
+            this.monthlyApyCount++;
+          }
+        }
+      }
     });
+    if(this.coinName === 'KSM') {
+      this.monthlyApy /= this.monthlyApyCount;
+    } else {
+      this.monthlyApy /= this.monthlyApyCount;
+    }
+    if(isNaN(this.monthlyApy)) {
+      this.monthlyApy = 0;
+    }
     const eraExposure = data.info[data.info.length - 1].exposure;
     this.eraCommission = this.commissions[this.commissions.length - 1];
     if(this.eraCommission < 0.0001) {
