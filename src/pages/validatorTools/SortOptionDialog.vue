@@ -14,6 +14,7 @@
     </md-content>
     <md-dialog-title>Highlight</md-dialog-title>
     <md-switch class="sort-by" v-model="highlightCommissionChange">Commission Change</md-switch>
+    <md-switch class="sort-by" v-model="hideCommissionHigh">Hide commission over 20%</md-switch>
     <md-dialog-actions>
       <md-button class="md-secodary" @click="showDialog = false">Close</md-button>
       <md-button class="md-primary" @click="onSave">Apply</md-button>
@@ -33,6 +34,7 @@ export default {
       showDialog: this.open,
       sortOptions: 'default',
       highlightCommissionChange: true,
+      hideCommissionHigh: true,
     }
   },
   mounted: async function() {
@@ -40,6 +42,11 @@ export default {
       this.highlightCommissionChange = true;
     } else {
       this.highlightCommissionChange = false;
+    }
+    if(localStorage.getItem('ksm.validator.highlight.hideCommissionHigh') === '1') {
+      this.hideCommissionHigh = true;
+    } else {
+      this.hideCommissionHigh = false;
     }
   },
   methods: {
@@ -54,12 +61,18 @@ export default {
         sortBy: this.sortOptions,
         highlights: {
           commissionChange: this.highlightCommissionChange,
+          commissionHigh: this.hideCommissionHigh,
         }
       });
       if(this.highlightCommissionChange) {
         localStorage.setItem('ksm.validator.highlight.commissionChange', '1');
       } else {
         localStorage.setItem('ksm.validator.highlight.commissionChange', '0');
+      }
+      if(this.hideCommissionHigh) {
+        localStorage.setItem('ksm.validator.highlight.hideCommissionHigh', '1');
+      } else {
+        localStorage.setItem('ksm.validator.highlight.hideCommissionHigh', '0');
       }
     }
   }

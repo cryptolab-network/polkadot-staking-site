@@ -77,7 +77,7 @@
     <p v-if="isError">Fetching data from our server is failed. The site is probably syncing new era data. Please try again later</p>
     <v-pagination v-if="!showProgressBar && !isError"
       v-model="page"
-      :length="displayValidators.length / 100"
+      :length="Math.ceil((displayValidators.length / 100))"
       class="my-4 mb-n1"
       circle
       :total-visible="7"
@@ -99,8 +99,9 @@
     </div>
     <v-pagination v-if="!showProgressBar && !isError"
       v-model="page"
-      :length="displayValidators.length / 100"
-      class="my-4"
+      :length="Math.ceil((displayValidators.length / 100))"
+      class="my-4 mb-n1"
+      circle
       :total-visible="7"
     ></v-pagination>
     <sort-option-dialog v-if="showSortOptions" v-bind:open="showSortOptions"  @close-sorting-option="showSortOptions = false" @sorting-option="onSortingOptionChanged"/>
@@ -322,6 +323,12 @@ export default {
       this.showTooltips = true;
     },
     onSortingOptionChanged: function(option) {
+      const hightlights = option.highlights;
+      if(hightlights.commissionHigh === true) {
+        this.hideCommissionHigh();
+      } else {
+        this.displayValidators = this.validators;
+      }
       const sortBy = option.sortBy;
       if(sortBy === 'alphabetical' || sortBy === 'default') {
         this.sortById();
@@ -335,10 +342,11 @@ export default {
         }
         );
       }
-      const hightlights = option.highlights;
-        if(hightlights.commissionChange === true) {
-          this.sortByCommissionChange();
-        }
+      
+      if(hightlights.commissionChange === true) {
+        this.sortByCommissionChange();
+      }
+      
       if(sortBy === 'default') {
         this.sortByFavorite();
       }
@@ -386,6 +394,13 @@ export default {
           });
         }
       }
+    },
+    hideCommissionHigh: function() {
+      this.displayValidators = this.displayValidators.filter(item => {
+        if(item.info.commission <= 20) {
+          return true;
+        }
+      });
     },
     commissionChange: function(validator) {
       if(validator.statusChange !== undefined) {
