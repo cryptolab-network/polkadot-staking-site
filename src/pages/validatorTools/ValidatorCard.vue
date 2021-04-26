@@ -61,10 +61,10 @@ export default {
     commissionChange: Number,
     coinName: String,
     stalePayouts: Boolean,
+    voted: Boolean,
   },
   data: function() {
     return {
-      voted: false,
       votedValidators: [],
     };
   },
@@ -107,14 +107,15 @@ export default {
       window.open(routeData.href, '_blank');
     },
     onClickVote: function() {
+      let voted = false;
       if(!this.voted) {
-        this.voted = true;
+        voted = true;
       } else {
-        this.voted = false;
+        voted = false;
       }
       this.$emit('voted-clicked', {
         stash: this.stash,
-        voted: this.voted});
+        voted: voted});
     },
     onClickFavorite: function(stash) {
       try{

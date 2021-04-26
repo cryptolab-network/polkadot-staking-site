@@ -40,8 +40,11 @@
     </v-layout>
     
     <md-toolbar class="md-primary md-dense toolbar" v-if="showTooltips && !showProgressBar">
-        <h4 class="md-dense" v-if="randomSeed < 0.7">
+        <h4 class="md-dense" v-if="randomSeed < 0.3">
           Tips: Click on each card to see detailed information of the validator. Click <md-icon>favorite</md-icon> to put your interested validators to the top
+        </h4>
+        <h4 class="md-dense" v-if="randomSeed >= 0.3 && randomSeed < 0.7">
+          Tips: Choose among validators by clicking <md-icon>how_to_vote</md-icon> to stake on Kumsama Chain
         </h4>
         <h4 class="md-dense" v-if="randomSeed >= 0.7">
           Tips: Support us by nominating "Cryptolab.Network" on Polkadot App
@@ -94,6 +97,7 @@
       v-bind:commissionChange="commissionChange(validator)"
       v-bind:stalePayouts="validator.info.unclaimed_eras.length >= 20"
       v-bind:coinName="coin"
+      v-bind:voted="votedValidators.find((v) => v === validator.id) !== undefined"
       @voted-clicked="onVotedClicked"
       @favorite-clicked="onFavoriteClicked"/>
     </div>
