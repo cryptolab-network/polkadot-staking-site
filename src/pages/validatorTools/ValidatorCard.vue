@@ -30,6 +30,9 @@
         </div>
         <md-card-actions>
           <md-card-media>
+            <md-button v-if="coinName === 'KSM'" class="md-icon-button" @click="onClickVote(stash)">
+              <md-icon v-bind:class="{'favorite': voted}">how_to_vote</md-icon>
+            </md-button>
             <md-button class="md-icon-button" @click="onClickFavorite(stash)">
               <md-icon v-bind:class="{'favorite': favorite}">favorite</md-icon>
             </md-button>
@@ -53,10 +56,17 @@ export default {
     allKSM: Number,
     isLoading: Boolean,
     favorite: Boolean,
+
     apy: Number,
     commissionChange: Number,
     coinName: String,
     stalePayouts: Boolean,
+  },
+  data: function() {
+    return {
+      voted: false,
+      votedValidators: [],
+    };
   },
   computed: {
     shortenedDisplayName: function() {
@@ -95,6 +105,16 @@ export default {
       console.log(stash, this.coinName);
       let routeData = this.$router.resolve({path: 'validatorStatus', query: {stash: stash, coin: this.coinName}});
       window.open(routeData.href, '_blank');
+    },
+    onClickVote: function() {
+      if(!this.voted) {
+        this.voted = true;
+      } else {
+        this.voted = false;
+      }
+      this.$emit('voted-clicked', {
+        stash: this.stash,
+        voted: this.voted});
     },
     onClickFavorite: function(stash) {
       try{

@@ -55,6 +55,8 @@ const router = new VueRouter({
   ],
 });
 
+export const EventBus = new Vue();
+
 new Vue({
   render: h => h(App),
   router: router,

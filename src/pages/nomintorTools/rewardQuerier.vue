@@ -86,6 +86,9 @@
         v-bind:coinName="coinName"/>
     </div>
   </div>
+  <div v-else-if="walletAddresses.length > 0">
+
+  </div>
   <div v-else>
     <md-empty-state class="empty-state-view"
     md-rounded
@@ -107,10 +110,18 @@ import Identicon from '@polkadot/vue-identicon';
 import moment from 'moment';
 import RewardChart from './rewardChart.vue';
 import ValidatorCard from '../validatorTools/ValidatorCard';
+import { EventBus } from '../../main';
 const constants = require('../../scripts/constants');
 export default {
   name: 'RewardQuerier',
   mounted: function() {
+    EventBus.$on('walletAddressChanged', (address)=>{
+      this.selectedStash = address;
+    })
+    const address = localStorage.getItem('walletAddress');
+    if(address !== null) {
+      this.selectedStash = address;
+    }
     if(localStorage.getItem(this.localStorageKey) !== undefined && localStorage.getItem(this.localStorageKey) !== null) {
       let storage = JSON.parse(localStorage.getItem(this.localStorageKey));
       if(!Array.isArray(storage)) {
@@ -153,6 +164,8 @@ export default {
         { text: 'Payout Date', value: 'date' },
         { text: 'Amount', value: 'amount' },
       ],
+
+      walletAddresses: [],
     }
   },
   methods: {

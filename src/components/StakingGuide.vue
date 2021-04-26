@@ -132,7 +132,8 @@
 
 <script>
 import Identicon from '@polkadot/vue-identicon';
-const polkadot = require('../scripts/polkadot');
+const Polkadot = require('../scripts/polkadot');
+const polkadot = new Polkadot();
 const constants = require('../scripts/constants');
 export default {
   name: 'StakingGuide',
@@ -169,7 +170,7 @@ export default {
     this.isLoading = true;
     this.showProgressBar = true;
     try {
-      await polkadot.connect();
+      await new Polkadot().connect();
       this.validators = await polkadot.retrieveValidators();
       this.isLoading = false;
       this.showProgressBar = false;

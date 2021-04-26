@@ -19,18 +19,20 @@ const {
 } = utilCrypto;
 
 class Polkadot {
-  constructor() {
-    // H4EeouHL5LawTqq2itu6auF62hDRX2LEBYk1TxS6QMrn9Hg
-    // 5GYczVZQhiKfBp2PG25rCdYEwSQycrD9mohzcogUcc9N3ENY
-    // this.addrs = ['H4EeouHL5LawTqq2itu6auF62hDRX2LEBYk1TxS6QMrn9Hg', 'CjU6xRgu5f9utpaCbYHBWZGxZPrpgUPSSXqSQQG5mkH9LKM',
-    // 'GCNeCFUCEjcJ8XQxJe1QuExpS61MavucrnEAVpcngWBYsP2',
-    // 'EMrTktHLYSHAqpVH3f2KMMoLkZPMWjeQAZLpZTJ6KgNcXVr'];
+  constructor(type) {
     this.yaohsin = new Yaohsin();
+    this.type = type;
   }
 
   async connect() {
+    let rpc = ['wss://kusama-rpc.polkadot.io', 'wss://kusama.api.onfinality.io/public-ws'];
+    switch(this.type) {
+      case 'DOT':
+        rpc = ['wss://rpc.polkadot.io', 'wss://polkadot.api.onfinality.io/public-ws'];
+        break;
+    }
     //wss://westend-rpc.polkadot.io  wss://kusama-rpc.polkadot.io
-    const wsProvider = new WsProvider('wss://kusama-rpc.polkadot.io');
+    const wsProvider = new WsProvider(rpc);
     this.api = await ApiPromise.create({ provider: wsProvider });
     setInterval(()=>{
       this.api.disconnect().then(()=>{
@@ -97,7 +99,7 @@ class Polkadot {
   async getAccountsFromExtension() {
     // returns an array of all the injected sources
     // (this needs to be called first, before other requests)
-    const extensions = await web3Enable('CryptoCurrencyLab');
+    const extensions = await web3Enable('CryptoLab');
 
     if (extensions.length === 0) {
       // no extension installed, or the user did not accept the authorization
@@ -228,6 +230,4 @@ class Polkadot {
   }
 }
 
-const polkadot = new Polkadot();
-
-module.exports = polkadot;
+module.exports = Polkadot;

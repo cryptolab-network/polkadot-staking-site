@@ -9,7 +9,7 @@
 </template>
 
 <script>
-const polkadot = require('../scripts/polkadot');
+const Polkadot = require('../scripts/polkadot');
 
 import CoinCards from './CoinCards.vue'
 export default {
@@ -18,7 +18,7 @@ export default {
     CoinCards,
   },
   created: async function() {
-    await polkadot.connect();
+    await new Polkadot().connect();
     // this.validators = await polkadot.retrieveValidators();
   },
   data: ()=>{

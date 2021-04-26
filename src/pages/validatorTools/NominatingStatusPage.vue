@@ -1,5 +1,36 @@
 <template>
   <div id="nominatingStatus">
+    <v-snackbar
+      v-model="showConnectWalletFirst"
+    >
+      Connect to Polkadot Wallet first to nominate selected validators
+      <template v-slot:action="{ attrs }">
+        <v-btn
+          color="pink"
+          text
+          v-bind="attrs"
+          @click="showConnectWalletFirst = false"
+        >
+          Close
+        </v-btn>
+      </template>
+    </v-snackbar>
+    <v-snackbar
+      v-model="showNominateExtrinsicsFail"
+    >
+      Extrinsics failed: Failed to call Extrinsics<br>
+      ({{nominateExtrinsicsFailedMsg}})
+      <template v-slot:action="{ attrs }">
+        <v-btn
+          color="pink"
+          text
+          v-bind="attrs"
+          @click="howNominateExtrinsicsFail = false"
+        >
+          Close
+        </v-btn>
+      </template>
+    </v-snackbar>
     <v-layout class="pt-8" v-if="showProgressBar" justify-center align-center>
       <v-progress-circular 
       indeterminate
@@ -29,6 +60,9 @@
         v-model="selectedStash" :md-options="stashes" @md-changed="getStashes" @md-selected="onSearchSelected" @keydown.enter.native="onSearchSelected" @focusout.native="onSearchSelected"/>
       </div>
       <div class="md-toolbar-section-end">
+        <md-button v-if="showNominateButton" class="md-icon-button" @click="onClickNominate">
+          <md-icon>how_to_vote</md-icon>
+        </md-button>
         <md-button class="md-icon-button" @click="onClickAnalytics">
           <md-icon>analytics</md-icon>
         </md-button>
@@ -41,7 +75,14 @@
     </md-toolbar>
     <p v-if="showProgressBar">Loading validator and nominator status...</p>
     <p v-if="isError">Fetching data from our server is failed. The site is probably syncing new era data. Please try again later</p>
-    <div class='card-container' v-for="(validator, index) in displayValidators" :key="index">
+    <v-pagination v-if="!showProgressBar && !isError"
+      v-model="page"
+      :length="displayValidators.length / 100"
+      class="my-4 mb-n1"
+      circle
+      :total-visible="7"
+    ></v-pagination>
+    <div class='card-container' v-for="(validator, index) in displayValidators.slice((page - 1) * 100, (page) * 100 - 1)" :key="index">
       <validator-card v-bind:displayName="validator.identity.display || validator.id" v-bind:activeKSM="validator.activeKSM || 0"
       v-bind:allKSM="validator.inactiveKSM || 0"
       v-bind:stash="validator.id"
@@ -53,8 +94,15 @@
       v-bind:commissionChange="commissionChange(validator)"
       v-bind:stalePayouts="validator.info.unclaimed_eras.length >= 20"
       v-bind:coinName="coin"
+      @voted-clicked="onVotedClicked"
       @favorite-clicked="onFavoriteClicked"/>
     </div>
+    <v-pagination v-if="!showProgressBar && !isError"
+      v-model="page"
+      :length="displayValidators.length / 100"
+      class="my-4"
+      :total-visible="7"
+    ></v-pagination>
     <sort-option-dialog v-if="showSortOptions" v-bind:open="showSortOptions"  @close-sorting-option="showSortOptions = false" @sorting-option="onSortingOptionChanged"/>
     <analytics-dialog v-if="showAnalytics" v-bind:open="showAnalytics" v-bind:validators="validators" @close-guide="showAnalytics = false"/>
   </div>
@@ -62,6 +110,7 @@
 
 <script>
 const Yaohsin = require('../../scripts/yaohsin');
+const Polkadot = require('../../scripts/polkadot');
 const constants = require('../../scripts/constants');
 import ValidatorCard from './ValidatorCard.vue';
 import AnalyticsDialog from './AnalyticsDialog.vue';
@@ -84,11 +133,22 @@ export default {
       isError: false,
       showTooltips: true,
       randomSeed: Math.random(),
+
+      votedValidators: [],
+      showNominateButton: false,
+      rpc: {},
+      showConnectWalletFirst: false,
+      showNominateExtrinsicsFail: false,
+      nominateExtrinsicsFailedMsg: '',
+
+      page: 1,
     }
   },
   mounted: async function() {
     this.showProgressBar = true;
     const yaohsin = new Yaohsin();
+    this.rpc = new Polkadot(this.coin);
+    await this.rpc.connect();
     let result = undefined;
     result = await yaohsin.getAllValidatorAndNominators({coin: this.coin}).catch(()=>{
         this.isError = true;
@@ -148,6 +208,51 @@ export default {
         });
         resolve(matched);
       });
+    },
+    onClickNominate: async function() {
+      const address = localStorage.getItem('walletAddress');
+      if(address !== null) {
+        const accounts = await this.rpc.getAccountsFromExtension();
+        if(accounts.length === 0) {
+          this.showConnectWalletFirst = true;
+          return;
+        }
+        const index = accounts.findIndex((account)=>{
+          return this.transformAddress(account.address, this.coin) === address;
+        });
+        if(index >= 0) {
+          try {
+            const blockHash = await this.rpc.nominate(accounts[index], this.votedValidators);
+            // nominated
+            console.log(blockHash);
+          } catch(e) {
+            this.showNominateExtrinsicsFail = true;
+            this.nominateExtrinsicsFailedMsg = e.message;
+            console.error(e.message);
+          }
+        }
+      } else {
+        this.showConnectWalletFirst = true;
+      }
+    },
+    transformAddress(addr, type) {
+      switch(type) {
+        case 'KSM':
+          return this.rpc.transformAddressFromSubstrate(addr, 2);
+        case 'DOT':
+          return this.rpc.transformAddressFromSubstrate(addr, 1);
+      } 
+    },
+    onVotedClicked: function(data) {
+      console.log(data);
+      if(data.voted === true) {
+        this.votedValidators.push(data.stash);
+      } else {
+        const index = this.votedValidators.findIndex((v) => v === data.stash);
+        if(index >= 0) {
+          this.votedValidators.splice(index, 1);
+        }
+      }
     },
     onSearchClear: function() {
       console.log('sort all');
@@ -297,6 +402,15 @@ export default {
         return 'dot.validator.favorite';
       }
       return '';
+    }
+  },
+  watch: {
+    votedValidators: function() {
+      if(this.votedValidators.length > 0) {
+        this.showNominateButton = true;
+      } else {
+        this.showNominateButton = false;
+      }
     }
   },
   components: {
