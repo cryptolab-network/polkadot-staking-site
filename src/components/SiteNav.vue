@@ -103,14 +103,13 @@
 import Vue from 'vue'
 import VueMeta from 'vue-meta'
 import MetaInfo from 'vue-meta-info';
-const Polkadot = require('../scripts/polkadot');
+const polkadotRpc = require('../scripts/polkadot').polkadotRpc;
+const kusamaRpc = require('../scripts/polkadot').kusamaRpc;
 import Identicon from '@polkadot/vue-identicon';
 import constants from '../scripts/constants';
 import divide from 'divide-bigint';
 import { EventBus } from '../main';
 
-const kusamaRpc = new Polkadot('KSM');
-const polkadotRpc = new Polkadot('DOT');
 // const constants = require('../scripts/constants');
 Vue.use(MetaInfo);
 Vue.use(VueMeta, {

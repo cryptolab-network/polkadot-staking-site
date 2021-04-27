@@ -1,5 +1,32 @@
 <template>
   <div id="nominatingStatus">
+    <v-dialog
+      v-model="showNominationResultdialog"
+      width="500"
+    >
+      <v-card>
+        <v-card-title class="headline grey lighten-2">
+          Nomination Result
+        </v-card-title>
+
+        <v-card-text>
+          You hava made a nomination on selected validators. You can see the result from <i> https://polkascan.io/kusama/block/{{blockHash}} </i>
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="#61ba89"
+            text
+            @click="showNominationResultdialog = false"
+          >
+            OK
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <v-snackbar
       v-model="showConnectWalletFirst"
     >
@@ -18,8 +45,7 @@
     <v-snackbar
       v-model="showNominateExtrinsicsFail"
     >
-      Extrinsics failed: Failed to call Extrinsics<br>
-      ({{nominateExtrinsicsFailedMsg}})
+      {{nominateExtrinsicsFailedMsg}}
       <template v-slot:action="{ attrs }">
         <v-btn
           color="pink"
@@ -28,6 +54,21 @@
           @click="howNominateExtrinsicsFail = false"
         >
           Close
+        </v-btn>
+      </template>
+    </v-snackbar>
+    <v-snackbar
+      v-model="showNominated"
+    >
+      {{nominatedExtrinsicsSuccessfulMsg}}
+      <template v-slot:action="{ attrs }">
+        <v-btn
+          color=#61ba89
+          text
+          v-bind="attrs"
+          @click="howNominateExtrinsicsFail = false"
+        >
+          OK
         </v-btn>
       </template>
     </v-snackbar>
@@ -40,11 +81,14 @@
     </v-layout>
     
     <md-toolbar class="md-primary md-dense toolbar" v-if="showTooltips && !showProgressBar">
-        <h4 class="md-dense" v-if="randomSeed < 0.3">
+        <h4 class="md-dense" v-if="randomSeed < 0.3 && coin === 'KSM'">
           Tips: Click on each card to see detailed information of the validator. Click <md-icon>favorite</md-icon> to put your interested validators to the top
         </h4>
-        <h4 class="md-dense" v-if="randomSeed >= 0.3 && randomSeed < 0.7">
-          Tips: Choose among validators by clicking <md-icon>how_to_vote</md-icon> to stake on Kumsama Chain
+        <h4 class="md-dense" v-if="randomSeed >= 0.3 && randomSeed < 0.7 && coin === 'KSM'">
+          Tips: Choose among validators by clicking <md-icon>how_to_vote</md-icon> to stake on Kusama Chain
+        </h4>
+        <h4 class="md-dense" v-if="randomSeed < 0.7 && coin === 'DOT'">
+          Tips: Click on each card to see detailed information of the validator. Click <md-icon>favorite</md-icon> to put your interested validators to the top
         </h4>
         <h4 class="md-dense" v-if="randomSeed >= 0.7">
           Tips: Support us by nominating "Cryptolab.Network" on Polkadot App
@@ -115,11 +159,12 @@
 
 <script>
 const Yaohsin = require('../../scripts/yaohsin');
-const Polkadot = require('../../scripts/polkadot');
+const kusamaRpc = require('../../scripts/polkadot').kusamaRpc;
 const constants = require('../../scripts/constants');
 import ValidatorCard from './ValidatorCard.vue';
 import AnalyticsDialog from './AnalyticsDialog.vue';
 import SortOptionDialog from './SortOptionDialog.vue';
+
 export default {
   name: 'nominatingStatus',
   props: {
@@ -145,14 +190,17 @@ export default {
       showConnectWalletFirst: false,
       showNominateExtrinsicsFail: false,
       nominateExtrinsicsFailedMsg: '',
-
+      showNominated: false,
+      showNominationResultdialog: false,
+      nominatedExtrinsicsSuccessfulMsg: '',
       page: 1,
+      blockHash: '',
     }
   },
   mounted: async function() {
     this.showProgressBar = true;
     const yaohsin = new Yaohsin();
-    this.rpc = new Polkadot(this.coin);
+    this.rpc = kusamaRpc;
     await this.rpc.connect();
     let result = undefined;
     result = await yaohsin.getAllValidatorAndNominators({coin: this.coin}).catch(()=>{
@@ -227,12 +275,22 @@ export default {
         });
         if(index >= 0) {
           try {
+            const accountInfo = await kusamaRpc.getAccountInfo(accounts[index].address);
+            if(accountInfo.data.miscFrozen.toNumber() === 0) {
+              this.showNominateExtrinsicsFail = true;
+              this.nominateExtrinsicsFailedMsg = 'This account has no bonded stake. Please bond it on Polkadot App and then use CryptoLab to nominate.'
+              return;
+            } else {
+              console.log(`bonded amount: ${accountInfo.data.miscFrozen.toNumber()}`);
+            }
             const blockHash = await this.rpc.nominate(accounts[index], this.votedValidators);
             // nominated
+            this.showNominated = true;
+            this.blockHash = blockHash;
             console.log(blockHash);
           } catch(e) {
             this.showNominateExtrinsicsFail = true;
-            this.nominateExtrinsicsFailedMsg = e.message;
+            this.nominateExtrinsicsFailedMsg = 'Extrinsics failed: Failed to call Extrinsics.\n(' + e.message + ')';
             console.error(e.message);
           }
         }

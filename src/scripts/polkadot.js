@@ -230,4 +230,7 @@ class Polkadot {
   }
 }
 
-module.exports = Polkadot;
+module.exports = {
+  kusamaRpc: new Polkadot('KSM'),
+  polkadotRpc: new Polkadot('DOT'),
+};

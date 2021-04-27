@@ -132,8 +132,7 @@
 
 <script>
 import Identicon from '@polkadot/vue-identicon';
-const Polkadot = require('../scripts/polkadot');
-const polkadot = new Polkadot();
+const kusamaRpc = require('../scripts/polkadot').kusamaRpc;
 const constants = require('../scripts/constants');
 export default {
   name: 'StakingGuide',
@@ -170,8 +169,7 @@ export default {
     this.isLoading = true;
     this.showProgressBar = true;
     try {
-      await new Polkadot().connect();
-      this.validators = await polkadot.retrieveValidators();
+      this.validators = await kusamaRpc.retrieveValidators();
       this.isLoading = false;
       this.showProgressBar = false;
     } catch(err) {
@@ -197,12 +195,12 @@ export default {
         this.active = index
       }
       if (index === 'third') { // select a number of funds to bond
-        this.accounts = await polkadot.getAccountsFromExtension();
+        this.accounts = await kusamaRpc.getAccountsFromExtension();
         if(this.accounts !== undefined) {
           this.hasExtension = true;
           this.selectedAddress = this.accounts[0].address;
           this.selectedAccount = this.accounts[0];
-          const accountInfo = await polkadot.getAccountInfo(this.selectedAddress);
+          const accountInfo = await kusamaRpc.getAccountInfo(this.selectedAddress);
           this._calculateFunds(accountInfo);
         } else {
           this.hasExtension = false;
@@ -217,8 +215,8 @@ export default {
         if(parseFloat(this.stakedFund) === 0) { // call bond()
           this.extrinsicStatus = "bonding..."
           try {
-            tx.push(polkadot.getBondExtrinsic(this.selectedAddress, this.stakeFund));
-            //await polkadot.bond(this.selectedAccount, this.selectedAccount.address, this.stakeFund);
+            tx.push(kusamaRpc.getBondExtrinsic(this.selectedAddress, this.stakeFund));
+            //await kusamaRpc.bond(this.selectedAccount, this.selectedAccount.address, this.stakeFund);
           } catch(e) {
             this.extrinsicStatus = "failed to bond: " + e;
             this.showProgressBar = false;
@@ -227,8 +225,8 @@ export default {
         } else if(parseFloat(this.stakeFund) - parseFloat(this.stakedFund) > 0) { // call bondExtra()
           this.extrinsicStatus = "bondingExtra..."
           try {
-            tx.push(polkadot.getBondExtraExtrinsic(parseFloat(this.stakeFund) - parseFloat(this.stakedFund)));
-            //await polkadot.bondExtra(this.selectedAccount, parseFloat(this.stakeFund) - parseFloat(this.stakedFund))
+            tx.push(kusamaRpc.getBondExtraExtrinsic(parseFloat(this.stakeFund) - parseFloat(this.stakedFund)));
+            //await kusamaRpc.bondExtra(this.selectedAccount, parseFloat(this.stakeFund) - parseFloat(this.stakedFund))
           } catch (e) {
             this.extrinsicStatus = "failed to bondExtra: " + e;
             this.showProgressBar = false;
@@ -238,17 +236,17 @@ export default {
         this.extrinsicStatus = "nominating..."
         // call nominate()
         try {
-          tx.push(polkadot.getNominateExtrinsic(this.validators.map((v)=>{
+          tx.push(kusamaRpc.getNominateExtrinsic(this.validators.map((v)=>{
            return v.addr;
           })));
-          //const blockHash = await polkadot.nominate(this.selectedAccount, this.validators.map((v)=>{
+          //const blockHash = await kusamaRpc.nominate(this.selectedAccount, this.validators.map((v)=>{
           //  return v.addr;
           //}));
           console.log(this.selectedAccount);
-          const blockHash = await polkadot.batchSignAndSend(this.selectedAccount, tx);
+          const blockHash = await kusamaRpc.batchSignAndSend(this.selectedAccount, tx);
           this.extrinsicStatus = "done!"
           this.blockHash = blockHash;
-          await polkadot.getBlockInfo(blockHash);
+          await kusamaRpc.getBlockInfo(blockHash);
           this.showProgressBar = false;
           this.polkascanUrl = `https://polkascan.io/kusama/block/${blockHash}`;
         } catch(e) {
@@ -260,7 +258,7 @@ export default {
     },
     async onAddrChange () {
       if(this.selectedAddress !== undefined) {
-        const accountInfo = await polkadot.getAccountInfo(this.selectedAddress);
+        const accountInfo = await kusamaRpc.getAccountInfo(this.selectedAddress);
         this.selectedAccount = this.accounts.filter(account => account.address == this.selectedAddress);
         if(this.selectedAccount.length > 0) {
           this.selectedAccount = this.selectedAccount[0];
@@ -281,7 +279,7 @@ export default {
       }
     },
     transformAddress(addr) { 
-      return polkadot.transformAddressFromSubstrate(addr, 2);
+      return kusamaRpc.transformAddressFromSubstrate(addr, 2);
     },
     onClose() {
       this.showDialog = false;
