@@ -73,7 +73,8 @@
     </div>
     <div class="md-title stash-info-title pt-4 pb-4 pl-4 header-card-light">Nominated Validators</div>
       <div class='card-container' v-for="(validator, index) in validators" :key="index">
-        <validator-card v-bind:displayName="validator.identity.display || validator.id" v-bind:activeKSM="validator.activeKSM || 0"
+        <validator-card v-bind:class="{ 'actively-nominated': validator.isActivelyNominated }"
+        v-bind:displayName="validator.identity.display || validator.id" v-bind:activeKSM="validator.activeKSM || 0"
         v-bind:allKSM="validator.inactiveKSM || 0"
         v-bind:stash="validator.id"
         v-bind:nominators="validator.info.nominators"
@@ -278,6 +279,17 @@ export default {
           acc += (parseInt(v_.balance.lockedBalance) / (this.coinName === 'DOT'? constants.POLKADOT_DECIMAL: constants.KUSAMA_DECIMAL));
           return acc;
         }, 0);
+        if(v.info !== undefined && v.info !== null) {
+          if(v.info.exposure !== undefined && v.info.exposure !== null) {
+            const activeNominators = v.info.exposure.others;
+            v.isActivelyNominated = false;
+            activeNominators.forEach(n => {
+              if(n.who === this.stash) {
+                v.isActivelyNominated = true;
+              }
+            });
+          }
+        }
       }
       this.isLoading = false;
     }
@@ -371,5 +383,8 @@ export default {
   .header-card-light {
     background-color:#61ba89;
     color: #fafafa;
+  }
+  .actively-nominated {
+    background-color: darkorange;
   }
 </style>

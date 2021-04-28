@@ -1,77 +1,17 @@
 <template>
   <div id="nominatingStatus">
     <v-dialog
-      v-model="showNominationResultdialog"
-      width="500"
+      v-model="showNominationDialog"
     >
-      <v-card>
-        <v-card-title class="headline grey lighten-2">
-          Nomination Result
-        </v-card-title>
-
-        <v-card-text>
-          You hava made a nomination on selected validators. You can see the result from <i> https://polkascan.io/kusama/block/{{blockHash}} </i>
-        </v-card-text>
-
-        <v-divider></v-divider>
-
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn
-            color="#61ba89"
-            text
-            @click="showNominationResultdialog = false"
-          >
-            OK
-          </v-btn>
-        </v-card-actions>
-      </v-card>
+      <nomination-dialog
+        v-bind:rpc="rpc"
+        v-bind:coinName="coin"
+        v-bind:stash="walletAddress"
+        v-bind:validators="votedValidators"
+        @close="onNominationDialogClose()"
+      />
     </v-dialog>
-    <v-snackbar
-      v-model="showConnectWalletFirst"
-    >
-      Connect to Polkadot Wallet first to nominate selected validators
-      <template v-slot:action="{ attrs }">
-        <v-btn
-          color="pink"
-          text
-          v-bind="attrs"
-          @click="showConnectWalletFirst = false"
-        >
-          Close
-        </v-btn>
-      </template>
-    </v-snackbar>
-    <v-snackbar
-      v-model="showNominateExtrinsicsFail"
-    >
-      {{nominateExtrinsicsFailedMsg}}
-      <template v-slot:action="{ attrs }">
-        <v-btn
-          color="pink"
-          text
-          v-bind="attrs"
-          @click="howNominateExtrinsicsFail = false"
-        >
-          Close
-        </v-btn>
-      </template>
-    </v-snackbar>
-    <v-snackbar
-      v-model="showNominated"
-    >
-      {{nominatedExtrinsicsSuccessfulMsg}}
-      <template v-slot:action="{ attrs }">
-        <v-btn
-          color=#61ba89
-          text
-          v-bind="attrs"
-          @click="howNominateExtrinsicsFail = false"
-        >
-          OK
-        </v-btn>
-      </template>
-    </v-snackbar>
+    
     <v-layout class="pt-8" v-if="showProgressBar" justify-center align-center>
       <v-progress-circular 
       indeterminate
@@ -141,7 +81,9 @@
       v-bind:commissionChange="commissionChange(validator)"
       v-bind:stalePayouts="validator.info.unclaimed_eras.length >= 20"
       v-bind:coinName="coin"
-      v-bind:voted="votedValidators.find((v) => v === validator.id) !== undefined"
+      v-bind:showVote="true"
+      v-bind:voted="votedValidators.find((v) => v.id === validator.id) !== undefined"
+      v-bind:selfStash="validator.info.exposure.own"
       @voted-clicked="onVotedClicked"
       @favorite-clicked="onFavoriteClicked"/>
     </div>
@@ -164,6 +106,7 @@ const constants = require('../../scripts/constants');
 import ValidatorCard from './ValidatorCard.vue';
 import AnalyticsDialog from './AnalyticsDialog.vue';
 import SortOptionDialog from './SortOptionDialog.vue';
+import NominationDialog from '../nomintorTools/nominationDialog.vue';
 
 export default {
   name: 'nominatingStatus',
@@ -186,22 +129,18 @@ export default {
 
       votedValidators: [],
       showNominateButton: false,
+      showNominationDialog: false,
       rpc: {},
-      showConnectWalletFirst: false,
-      showNominateExtrinsicsFail: false,
-      nominateExtrinsicsFailedMsg: '',
-      showNominated: false,
-      showNominationResultdialog: false,
-      nominatedExtrinsicsSuccessfulMsg: '',
       page: 1,
       blockHash: '',
+
+      walletAddress: '',
     }
   },
   mounted: async function() {
     this.showProgressBar = true;
     const yaohsin = new Yaohsin();
     this.rpc = kusamaRpc;
-    await this.rpc.connect();
     let result = undefined;
     result = await yaohsin.getAllValidatorAndNominators({coin: this.coin}).catch(()=>{
         this.isError = true;
@@ -230,9 +169,15 @@ export default {
         acc += (parseInt(v_.balance.lockedBalance) / (this.coin === 'DOT'? constants.POLKADOT_DECIMAL: constants.KUSAMA_DECIMAL));
         return acc;
       }, 0);
+      v.first = false;
+      if(v.identity.display.toUpperCase() === 'CRYPTOLAB.NETWORK') {
+        v.first = true;
+      }
       this.displayValidators.push(v);
       v.isLoading = false;
     }
+    this.sortById();
+    this.sortPriority();
     this.displayValidators = this.displayValidators.map(
       function(data, idx)
       {
@@ -240,7 +185,6 @@ export default {
         return data;
       }
     );
-    this.sortById();
     this.sortByCommissionChange();
     this.sortByFavorite();
     this.showProgressBar = false;
@@ -249,6 +193,10 @@ export default {
     });
   },
   methods: {
+    onNominationDialogClose: function() {
+      console.log('close nomination dialog');
+      this.showNominationDialog = false;
+    },
     getStashes: function(term) {
       this.stashes = new Promise((resolve)=>{
         const matched = [];
@@ -263,55 +211,18 @@ export default {
       });
     },
     onClickNominate: async function() {
-      const address = localStorage.getItem('walletAddress');
-      if(address !== null) {
-        const accounts = await this.rpc.getAccountsFromExtension();
-        if(accounts.length === 0) {
-          this.showConnectWalletFirst = true;
-          return;
-        }
-        const index = accounts.findIndex((account)=>{
-          return this.transformAddress(account.address, this.coin) === address;
-        });
-        if(index >= 0) {
-          try {
-            const accountInfo = await kusamaRpc.getAccountInfo(accounts[index].address);
-            if(accountInfo.data.miscFrozen.toNumber() === 0) {
-              this.showNominateExtrinsicsFail = true;
-              this.nominateExtrinsicsFailedMsg = 'This account has no bonded stake. Please bond it on Polkadot App and then use CryptoLab to nominate.'
-              return;
-            } else {
-              console.log(`bonded amount: ${accountInfo.data.miscFrozen.toNumber()}`);
-            }
-            const blockHash = await this.rpc.nominate(accounts[index], this.votedValidators);
-            // nominated
-            this.showNominated = true;
-            this.blockHash = blockHash;
-            console.log(blockHash);
-          } catch(e) {
-            this.showNominateExtrinsicsFail = true;
-            this.nominateExtrinsicsFailedMsg = 'Extrinsics failed: Failed to call Extrinsics.\n(' + e.message + ')';
-            console.error(e.message);
-          }
-        }
-      } else {
-        this.showConnectWalletFirst = true;
-      }
-    },
-    transformAddress(addr, type) {
-      switch(type) {
-        case 'KSM':
-          return this.rpc.transformAddressFromSubstrate(addr, 2);
-        case 'DOT':
-          return this.rpc.transformAddressFromSubstrate(addr, 1);
-      } 
+      this.showNominationDialog = true;
+      this.walletAddress = localStorage.getItem('walletAddress');
     },
     onVotedClicked: function(data) {
-      console.log(data);
       if(data.voted === true) {
-        this.votedValidators.push(data.stash);
+        if(this.votedValidators.length >= 16) {
+          return;
+        }
+        const v = this.validators.find((v)=> v.id === data.stash);
+        this.votedValidators.push(v);
       } else {
-        const index = this.votedValidators.findIndex((v) => v === data.stash);
+        const index = this.votedValidators.findIndex((v) => v.id === data.stash);
         if(index >= 0) {
           this.votedValidators.splice(index, 1);
         }
@@ -321,9 +232,14 @@ export default {
       console.log('sort all');
       this.displayValidators.splice(0, this.displayValidators.length);
       this.validators.forEach((v)=>{
+        v.first = false;
+        if(v.identity.display.toUpperCase() === 'CRYPTOLAB.NETWORK') {
+          v.first = true;
+        }
         this.displayValidators.push(v);
       });
       this.sortById();
+      this.sortPriority();
       this.sortByFavorite();
       this.displayValidators = this.displayValidators.map(
         function(data, idx)
@@ -375,6 +291,7 @@ export default {
     onFavoriteClicked: function() {
       if(this.selectedStash === '') {
         this.sortById();
+        this.sortPriority();
         this.sortByFavorite();
       }
     },
@@ -392,9 +309,13 @@ export default {
         this.displayValidators = this.validators;
       }
       const sortBy = option.sortBy;
-      if(sortBy === 'alphabetical' || sortBy === 'default') {
+      if(sortBy === 'alphabetical') {
         this.sortById();
-      } else if(sortBy === 'apy'){
+      } else if(sortBy === 'default') {
+        this.sortById();
+        this.sortPriority();
+      }
+        else if(sortBy === 'apy'){
         this.sortByApy();
         this.displayValidators = this.displayValidators.map(
         function(data, idx)
@@ -441,7 +362,14 @@ export default {
       });
     },
     sortById: function() {
-      this.displayValidators = this.displayValidators.sort((a, b) => a.identity.display.localeCompare(b.identity.display));
+      this.displayValidators = this.displayValidators.sort((a, b) => {
+        return a.identity.display.localeCompare(b.identity.display);
+      });
+    },
+    sortPriority: function() {
+      this.displayValidators = this.displayValidators.sort((a, b) => {
+        return a.first === true ? -1 : b.first === true ? 1 : 0;
+      });
     },
     sortByFavorite: function() {
       let item = localStorage.getItem(this.localStoragePath);
@@ -494,6 +422,7 @@ export default {
     ValidatorCard,
     AnalyticsDialog,
     SortOptionDialog,
+    NominationDialog,
   }
 }
 </script>

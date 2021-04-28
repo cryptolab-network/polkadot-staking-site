@@ -5,6 +5,8 @@ const utilCrypto = require('@polkadot/util-crypto');
 const Yaohsin = require('./yaohsin');
 const constants = require('../scripts/constants');
 
+import { EventBus } from '../main';
+
 const { ApiPromise, WsProvider} = Api;
 const {
   web3Accounts,
@@ -166,6 +168,7 @@ class Polkadot {
           resolve(status.asInBlock.toString());
         } else {
           console.log(`Current status: ${status.type}`);
+          EventBus.$emit('extrinsicStatus', status);
         }
       }).catch((error) => {
         console.log(':( transaction failed', error);
@@ -178,6 +181,15 @@ class Polkadot {
   transformAddressFromSubstrate(addr, toPrefix) {
     const decoded = decodeAddress(addr);
     return encodeAddress(decoded, toPrefix);
+  }
+
+  async getController(account) {
+    try {
+      const bonded = await this.api.query.staking.bonded(account);
+      return bonded.unwrap().toString();
+    } catch(e) {
+      return 'None';
+    }
   }
 
   async bond(account, addr, balance) {
@@ -229,8 +241,6 @@ class Polkadot {
     });
   }
 }
-
-module.exports = {
-  kusamaRpc: new Polkadot('KSM'),
-  polkadotRpc: new Polkadot('DOT'),
-};
+const kusamaRpc = new Polkadot('KSM');
+const polkadotRpc = new Polkadot('DOT');
+export {kusamaRpc, polkadotRpc};

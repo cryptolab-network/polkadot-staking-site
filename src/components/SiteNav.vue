@@ -103,8 +103,7 @@
 import Vue from 'vue'
 import VueMeta from 'vue-meta'
 import MetaInfo from 'vue-meta-info';
-const polkadotRpc = require('../scripts/polkadot').polkadotRpc;
-const kusamaRpc = require('../scripts/polkadot').kusamaRpc;
+import { polkadotRpc, kusamaRpc } from '../scripts/polkadot';
 import Identicon from '@polkadot/vue-identicon';
 import constants from '../scripts/constants';
 import divide from 'divide-bigint';

@@ -10,6 +10,14 @@ const constants = {
             return false
         }
     },
+
+    accountRoles: {
+        controller: 'Controller',
+        unknown: 'Unknown',
+        notNominator: 'Not a Nominator',
+        notController: 'Not a Controller',
+        validatorController: 'Controller of a Validator'
+    }
 };
 
 module.exports = constants;

@@ -30,7 +30,7 @@
         </div>
         <md-card-actions>
           <md-card-media>
-            <md-button v-if="coinName === 'KSM'" class="md-icon-button" @click="onClickVote(stash)">
+            <md-button v-if="coinName === 'KSM' && showVote" class="md-icon-button" @click="onClickVote(stash)">
               <md-icon v-bind:class="{'favorite': voted}">how_to_vote</md-icon>
             </md-button>
             <md-button class="md-icon-button" @click="onClickFavorite(stash)">
@@ -62,6 +62,8 @@ export default {
     coinName: String,
     stalePayouts: Boolean,
     voted: Boolean,
+    showVote: Boolean,
+    selfStash: Number,
   },
   data: function() {
     return {
