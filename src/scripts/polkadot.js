@@ -98,6 +98,15 @@ class Polkadot {
     }
   }
 
+  async isValidator(addr) {
+    const _sess = await this.api.query.session.nextKeys(addr);
+    const sessionKey = _sess.unwrapOr('');
+    if(sessionKey !== '') {
+      return true;
+    }
+    return false;
+  }
+
   async getAccountsFromExtension() {
     // returns an array of all the injected sources
     // (this needs to be called first, before other requests)
@@ -189,6 +198,26 @@ class Polkadot {
       return bonded.unwrap().toString();
     } catch(e) {
       return 'None';
+    }
+  }
+
+  async isController(account) {
+    try {
+      await this.api.query.staking.ledger(account);
+      return true;
+    } catch(e) {
+      return false;
+    }
+  }
+
+  async isValidatorController(account) {
+    try {
+      const ledger = await this.api.query.staking.ledger(account);
+      const isValidator = await this.isValidator(ledger.unwrap().stash);
+      return isValidator;
+    } catch(e) {
+      console.log(e);
+      return false;
     }
   }
 

@@ -3,7 +3,9 @@
     <v-snackbar
       v-model="alertWalletConnectionFail"
     >
-      Cannot connect to the Polkadot Extension
+      Cannot connect to the Polkadot Extension. You must install
+      <a href="https://polkadot.js.org/extension/" target="_blank">the extension</a>
+      and allow CryptoLab to access it.
       <template v-slot:action="{ attrs }">
         <v-btn
           color="pink"

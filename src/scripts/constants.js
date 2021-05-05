@@ -12,11 +12,11 @@ const constants = {
     },
 
     accountRoles: {
-        controller: 'Controller',
+        controller: 'OK',
         unknown: 'Unknown',
-        notNominator: 'Not a Nominator',
-        notController: 'Not a Controller',
-        validatorController: 'Controller of a Validator'
+        notNominator: 'The address is not a nominator stash',
+        validator: 'The account is a validator',
+        validatorController: "The stash is already a validator's controller"
     }
 };
 

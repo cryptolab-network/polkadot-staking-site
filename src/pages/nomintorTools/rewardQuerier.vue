@@ -306,7 +306,7 @@ export default {
 <style lang="scss" scoped>
 .card-container {
     width: 8%;
-    min-width: 250px;
+    min-width: 290px;
     margin-top: 12px;
     margin-bottom: 10px;
     position: relative;

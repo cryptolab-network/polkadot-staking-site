@@ -1,6 +1,6 @@
 <template>
   <div id="validator-card">
-    <md-card md-with-hover v-bind:id="stash" v-bind:class="{'inactive-validator': activeKSM === 0}" md-ratio="4:3">
+    <md-card md-with-hover v-bind:id="stash" v-bind:class="{'inactive-validator': activeKSM === 0}">
     
       <md-card-header @click.native="onClickCard(stash)" >
         <div class="md-title">
@@ -14,7 +14,8 @@
         </div>
         <div>
           <div class="md-subhead small-font">{{activeKSM.toFixed(coinName === 'KSM'?3:0)}} {{coinName}} / 
-            <span class="md-subhead small-font" v-if="!isLoading && allKSM !== undefined">{{allKSM.toFixed(coinName === 'KSM'?3:0)}} {{coinName}}</span>
+            <span class="md-subhead small-font" v-if="!isLoading && allKSM !== undefined">{{allKSM.toFixed(coinName === 'KSM'?3:0)}} {{coinName}}</span> /
+            <!--<span class="md-subhead small-font" v-if="!isLoading && allKSM !== undefined">{{selfStash}} {{coinName}}</span>-->
           </div>
           <div class="md-subhead md-headline">APY: {{(apy * 100).toFixed(2)}}%</div>
           <div class="md-subhead" v-if="isLoading">Loading total nominated amount...</div>
@@ -161,8 +162,10 @@ export default {
 <style lang="scss" scoped>
   .md-card {
     margin: 4px;
-    min-height: 250px;
-    max-height: 250px;
+    min-height: 260px;
+    max-height: 260px;
+    min-width: 280px;
+    max-width: 280px;
     vertical-align: top;
   }
   .md-title {

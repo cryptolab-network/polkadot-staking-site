@@ -45,24 +45,24 @@
                   v-bind:class="{ 'valid-item': bondedAmount > 0, 'invalid-item': bondedAmount === 0 }">
                   {{bondedAmount.toFixed(3)}} {{coinName}}
                 </v-chip> / {{totalAmount}} {{coinName}}</div>
-                <div class='mb-2'><span class='subtitle-2'>Role:</span>
-                <v-chip class="ml-2" v-bind:class="{ 'valid-item': role === 'Controller', 'invalid-item': bondedAmount === 0 }">
+                <div class='mb-2'><span class='subtitle-2'>Status:</span>
+                <v-chip class="ml-2" v-bind:class="{ 'valid-item': role === 'OK', 'invalid-item': role !== 'OK' }">
                   {{role}}
                 </v-chip>
                 </div>
-                <div class='mt-4'>
-                  <v-btn @click="becomeNominator" color="#61ba89" class="white--text" v-if="role === 'Not a Nominator'">Become a nominator</v-btn>
+                <div class='mt-4 d-flex flex-column'>
+                  <v-btn @click="becomeNominator" color="#61ba89" class="white--text" v-if="bondedAmount === 0 && role !== 'Not a Nominator' && !showBondBox">Bond</v-btn>
                   <v-text-field
                     v-model="amountToBond"
                     label="Amount (KSM)"
                     v-if="showBondBox"
                     :rules="validateBondAmount"
-                    class="shrink"
+                    class="shrink mt-2"
                   ></v-text-field>
                 </div>
               </div>
             </v-card-text>
-            <v-card-title class="nomination-title mb-4" v-bind:class="{'nomination-title-error': blockHash === ''}">
+            <v-card-title class="nomination-title mb-4">
               Validators to Nominate ({{validators.length}}/16)
             </v-card-title>
             <div class='card-container' v-for="(validator, index) in validators" :key="index">
@@ -151,7 +151,7 @@ export default {
       validateBondAmount: [
         value => !!value || 'Required.',
         value => !isNaN(value) || 'Must be a number',
-        value => !(value < (this.bondedAmount)) || 'Must not over your bonded amount',
+        value => (value < (this.totalAmount)) || 'Must not over your total amount of funds',
       ],
 
       blockHash: '',
@@ -197,6 +197,7 @@ export default {
       this.e1 = 2;
     },
     onStashChanged: async function() {
+      this.showBondBox = false;
       this.validated = false;
       this.role = constants.accountRoles.unknown;
       const address = this.stash;
@@ -215,26 +216,36 @@ export default {
           const accountInfo = await this.rpc.getAccountInfo(this.walletAddress);
           const sum = BigInt(accountInfo.data.free) +
             BigInt(accountInfo.data.reserved);
-          this.totalAmount = divide(sum, constants.KUSAMA_DECIMAL).toFixed(3);
+          this.totalAmount = parseFloat(divide(sum, constants.KUSAMA_DECIMAL).toFixed(3));
           this.bondedAmount = accountInfo.data.miscFrozen.toNumber() / constants.KUSAMA_DECIMAL;
           console.log(this.totalAmount, this.bondedAmount);
           this.amountToBond = this.bondedAmount.toString();
           if(accountInfo.data.miscFrozen.toNumber() === 0) {
             // TODO: error handling
           }
-          const controller = await this.rpc.getController(this.walletAddress);
+          let controller = await this.rpc.getController(this.walletAddress);
+          console.log(controller);
           if(controller === 'None') {
-            this.role = constants.accountRoles.notNominator;
-            // TODO: help the user to bond the account
+            if(!this.rpc.isController(this.walletAddress)) {
+              this.role = constants.accountRoles.notNominator;
+              // TODO: help the user to bond the account
+              return;
+            }
+          }
+          const isValidator = await this.rpc.isValidator(this.walletAddress);
+          if(isValidator) {
+            this.role = constants.accountRoles.validator;
             return;
           }
-          if(controller !== this.walletAddress) {
-            // TODO: error handling
-            this.role = constants.accountRoles.notController;
+          const isValidatorController = await this.rpc.isValidatorController(this.walletAddress);
+          if(isValidatorController) {
+            this.role = constants.accountRoles.validatorController;
             return;
           }
           this.role = constants.accountRoles.controller;
-          this.validated = true;
+          if(this.amountToBond > 0) {
+            this.validated = true;
+          }
         }
       }
     },
@@ -296,7 +307,7 @@ export default {
   }
   .card-container {
     width: 8%;
-    min-width: 250px;
+    min-width: 290px;
     margin-top: 12px;
     margin-bottom: 10px;
     position: relative;
