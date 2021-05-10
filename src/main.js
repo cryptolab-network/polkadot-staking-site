@@ -52,6 +52,9 @@ const router = new VueRouter({
     { path: '/tools/dotSR', component: rewardQuerierPage, name: 'rewardQuerierPage', props: {
       coinName: 'DOT'
     }},
+    { path: '/tools/dotSR/:stash', component: rewardQuerierPage, name: 'rewardQuerierPage', props: {
+      coinName: 'DOT'
+    }},
   ],
 });
 

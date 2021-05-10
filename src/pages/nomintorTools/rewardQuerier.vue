@@ -116,11 +116,16 @@ const constants = require('../../scripts/constants');
 export default {
   name: 'RewardQuerier',
   mounted: function() {
+    if(this.$route.params.stash !== undefined) {
+      this.selectedStash = this.$route.params.stash;
+    }
     EventBus.$on('walletAddressChanged', (address)=>{
-      this.selectedStash = address;
+      if(this.$route.params.stash === undefined) {
+        this.selectedStash = address;
+      }
     })
     const address = localStorage.getItem('walletAddress');
-    if(address !== null) {
+    if(address !== null && this.$route.params.stash === undefined) {
       this.selectedStash = address;
     }
     if(localStorage.getItem(this.localStorageKey) !== undefined && localStorage.getItem(this.localStorageKey) !== null) {
