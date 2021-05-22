@@ -51,7 +51,16 @@
     </v-simple-table>
     <div class='md-layout md-alignment-top md-gutter'>
       <div class='md-layout-item md-medium-size-55 md-medium-size-100 md-xsmall-size-100'>
-        <div class="md-title stash-info-title pt-4 pb-4 pl-4 header-card-light">Era Rewards</div>
+        <div class="md-title stash-info-title pt-4 pb-4 pl-4 header-card-light" >
+          <div class="md-layout">
+            <div class="md-layout-item">Era Rewards</div>
+            <download-csv
+              :data = "eraRewards">
+              <md-icon style="color:#fafafa; cursor:pointer" class="md-layout-item pt-4 pb-4 pr-8 header-card-light">file_download</md-icon>
+              <md-tooltip md-direction="bottom">Export rewards as CSV</md-tooltip>
+            </download-csv>
+          </div>
+        </div>
         <v-data-table
           :headers="eraRewardHeaders"
           :items="eraRewards"
@@ -169,6 +178,8 @@ export default {
         },
         { text: 'Payout Date', value: 'date' },
         { text: 'Amount', value: 'amount' },
+        { text: 'Price (USD)', value: 'price' },
+        { text: 'Total (USD)', value: 'total'}
       ],
 
       walletAddresses: [],
@@ -225,9 +236,12 @@ export default {
           _eraRewards[reward.era] = {
             amount: reward.amount,
             timestamp: reward.timestamp,
+            price: reward.price,
+            total: reward.total,
           }
         } else {
           _eraRewards[reward.era].amount += reward.amount;
+          _eraRewards[reward.era].total += reward.total;
         }
       });
       let result = [];
@@ -235,7 +249,9 @@ export default {
         result.push({
           era: era,
           amount: _eraRewards[era].amount,
-          date: moment(_eraRewards[era].timestamp).format('L'),
+          date: moment.utc(_eraRewards[era].timestamp).format('L'),
+          price: _eraRewards[era].price.toFixed(3),
+          total: _eraRewards[era].total.toFixed(3),
         })
       });
       result.reverse();

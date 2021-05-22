@@ -29,6 +29,10 @@ export default {
         displayName: 'Kusama One Thousand Validator Monitor',
         route: '/tools/oneKValidators',
         coinName: 'KSM',
+      },{
+        displayName: 'Polkadot One Thousand Validator Monitor',
+        route: '/tools/oneKValidatorsDot',
+        coinName: 'DOT',
       }]
     }
   },

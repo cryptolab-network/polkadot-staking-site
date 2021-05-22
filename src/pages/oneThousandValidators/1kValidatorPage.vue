@@ -6,7 +6,7 @@
     <div v-if="readyToDisplay && !isError">
       <v-card class="pt-2 mb-4 elevation-2 header-card">
         
-        <div class="pb-2"><img src="../../assets/1kv-logo.png" style="height:64px"/></div>
+        <div class="pb-2"><img v-if="coin==='KSM'" src="../../assets/1kv-logo.png" style="height:64px"/></div>
         <div class="d-flex header-card justify-center">
         <div class="heading-6 ma-2 mb-2"><span style="color:#61ba89" class="mr-2">Valid validators: </span>{{oneKVStatus.length}}</div>
         <!--<p>Total nominators: {{currentNominatingStatus.nominators.length}}</p>-->
@@ -54,6 +54,7 @@
           <md-icon v-if="item.oneKVNominated === true" class="nominated onekv-nominated-cell">check</md-icon>
           <div v-if="item.oneKVNominated === true" class="onekv-nominated-cell">({{item.nominatedFor}})</div>
           <md-icon v-if="item.oneKVNominated === false" class="waiting">close</md-icon>
+          <div v-if="item.oneKVNominated === false" class="onekv-nominated-cell">({{item.nominatedAt}})</div>
         </template>
         <template v-slot:[`item.electedRate`]="{ item }">
           {{ Number.parseFloat(item.electedRate * 100).toFixed(2) }} %
@@ -68,6 +69,9 @@ const Yaohsin = require('../../scripts/yaohsin');
 // const constants = require('../scripts/constants');
 export default {
   name: 'oneKValidator',
+  props: {
+    coin: String,
+  },
   data: function() {
     return {
       oneKVStatus: [],
@@ -95,6 +99,7 @@ export default {
         { text: 'Nomination Order', value: 'order', align: 'right' },
         { text: 'Total Nominators', value: 'totalNominators', align: 'right d-none d-lg-table-cell' },
         { text: 'Active Nominators', value: 'activeNominators', align: 'right d-none d-lg-table-cell' },
+        // { text: 'Last Nominated', value: 'nominatedAt', align: 'right d-none d-lg-table-cell'},
         { text: 'Rank', value: 'rank', align: 'right d-none d-lg-table-cell' },
         { text: 'Elected Rate', value: 'electedRate', align: 'right' },
       ],
@@ -103,20 +108,20 @@ export default {
   mounted: async function() {
     this.yaohsin = new Yaohsin();
     this.showProgressBar = true;
-    const result = await this.yaohsin.getOneKVInfo().catch(()=>{
+    const result = await this.yaohsin.getOneKVInfo(this.coin).catch(()=>{
       this.isError = true;
     });
     if(this.isError) {
       this.showProgressBar = false;
       return;
     }
-    const oneKVOfficial = await this.yaohsin.getOneKVOfficialNominators();
+    const oneKVOfficial = await this.yaohsin.getOneKVOfficialNominators(this.coin);
     const oneKVNominators = oneKVOfficial.nominators;
     this.totalOneKvNominatorCount = oneKVNominators.length;
     this.totalValidatorCount = result.valid.length;
     this.totalNominatedCount = result.electedCount;
     this.oneKVStatus = result.valid;
-    this.yaohsin.getOneKVDetailedInfo().then((detail)=>{
+    this.yaohsin.getOneKVDetailedInfo(this.coin).then((detail)=>{
       this.oneKVStatus = this.yaohsin.mergeOneKVList(this.oneKVStatus, detail.valid, oneKVNominators);
       this.oneKVStatus.map((v)=>{
         if(v.commission < 1) {
@@ -158,20 +163,11 @@ export default {
     },
     onClickAnalytic: function(stash) {
       console.log(stash);
-      let routeData = this.$router.resolve({path: 'validatorStatus', query: {stash: stash, coin: 'KSM'}});
+      let routeData = this.$router.resolve({path: 'validatorStatus', query: {stash: stash, coin: this.coin}});
       window.open(routeData.href, '_blank');
     },
     sortByNominationOrder: function() {
       this.oneKVStatus.sort((a, b)=>{
-        // add this condition to allow those who have been nominated for 3 era join the ordering.(because they can actually be nominated again)
-        if((Date.now() - a.lastNomination < 18 * 3600 * 1000) || (Date.now() - b.lastNomination < 18 * 3600 * 1000)) { // last era, ignore it
-          if(a.oneKVNominated === true && b.oneKVNominated === false) {
-            return 1;
-          }
-          if(a.oneKVNominated === false && b.oneKVNominated === true) {
-            return -1;
-          }
-        }
         if(a.aggregate?.aggregate > b.aggregate?.aggregate) {
           return -1;
         } else if(a.aggregate?.aggregate < b.aggregate?.aggregate) {

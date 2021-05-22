@@ -68,7 +68,7 @@ class Polkadot {
     ];
     try {
       // add random validators from 1kv list
-      const onekvDetailedList = await this.yaohsin.getOneKVDetailedInfo({
+      const onekvDetailedList = await this.yaohsin.getOneKVDetailedInfo('KSM', {
         rate: 0.3,
         totalNominators: 20,
         ignoredValidators: [

@@ -31,7 +31,7 @@
           Tips: Click on each card to see detailed information of the validator. Click <md-icon>favorite</md-icon> to put your interested validators to the top
         </h4>
         <h4 class="md-dense" v-if="randomSeed >= 0.7">
-          Tips: Support us by nominating "Cryptolab.Network" on Polkadot App
+          Tips: Support us by nominating "Cryptolab 01" and "Cryptolab.Network" on Polkadot App
         </h4>
         <div class="md-toolbar-section-end md-dense">
           <md-button class="md-icon-button" @click="onClickCloseTooltips">
@@ -165,10 +165,11 @@ export default {
         };
       }
       v.activeKSM = parseInt(v.info.exposure.total) / (this.coin === 'DOT'? constants.POLKADOT_DECIMAL: constants.KUSAMA_DECIMAL);
-      v.inactiveKSM = v.info.nominators.reduce((acc, v_)=>{
-        acc += (parseInt(v_.balance.lockedBalance) / (this.coin === 'DOT'? constants.POLKADOT_DECIMAL: constants.KUSAMA_DECIMAL));
-        return acc;
-      }, 0);
+      v.inactiveKSM = parseInt(v.info.total) / (this.coin === 'DOT'? constants.POLKADOT_DECIMAL: constants.KUSAMA_DECIMAL);
+      // v.inactiveKSM = v.info.nominators.reduce((acc, v_)=>{
+      //   acc += (parseInt(v_.balance.lockedBalance) / (this.coin === 'DOT'? constants.POLKADOT_DECIMAL: constants.KUSAMA_DECIMAL));
+      //   return acc;
+      // }, 0);
       v.first = false;
       if(v.identity.display.toUpperCase() === 'CRYPTOLAB.NETWORK') {
         v.first = true;

@@ -9,7 +9,10 @@ import VueMaterialSlider from 'vue-material-slider';
 import VueApexCharts from 'vue-apexcharts'
 import VueClipboard from 'vue-clipboard2'
 import VueMobileDetection from "vue-mobile-detection";
-import vuetify from './plugins/vuetify'
+import vuetify from './plugins/vuetify';
+import JsonCSV from 'vue-json-csv'
+
+Vue.component('downloadCsv', JsonCSV)
  
 Vue.use(VueClipboard)
 Vue.use(VueApexCharts)
@@ -34,7 +37,12 @@ const rewardQuerierPage = Vue.component('rewardQuerierPage', require('./pages/no
 const router = new VueRouter({
   mode: 'history',
   routes: [
-    { path: '/tools/oneKValidators', component: oneKValidators, name: 'oneKValidator' },
+    { path: '/tools/oneKValidators', component: oneKValidators, name: 'oneKValidator', props: {
+      coin: 'KSM'
+    }},
+    { path: '/tools/oneKValidatorsDot', component: oneKValidators, name: 'oneKValidator', props: {
+      coin: 'DOT'
+    }},
     { path: '/', component: landingPage, name: 'landingPage'},
     { path: '/tools', component: toolPage, name: 'toolPage'},
     { path: '/contact', component: contactPage, name: 'contactPage'},

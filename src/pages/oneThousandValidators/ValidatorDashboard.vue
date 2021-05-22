@@ -66,10 +66,12 @@
           </v-simple-table>
           </v-card>
           <v-card class="ml-md-4 mt-sm-4">
-            <apexchart id="nomination-trend" ref="nomination-trend" width="380px" type="line" :options="options" :series="series"></apexchart>
+            <apexchart v-if="$isMobile()" id="nomination-trend" ref="nomination-trend" width="380px" type="line" :options="options" :series="series"></apexchart>
+            <apexchart v-else id="nomination-trend" ref="nomination-trend" width="580px" type="line" :options="options" :series="series"></apexchart>
           </v-card>
           <v-card class="ml-md-4 mt-sm-4">
-            <apexchart id="apy-trend" ref="apy-trend" width="380px" type="line" :options="apyOptions" :series="apySeries"></apexchart>
+            <apexchart v-if="$isMobile()" id="apy-trend" ref="apy-trend" width="380px" type="line" :options="apyOptions" :series="apySeries"></apexchart>
+            <apexchart v-else id="apy-trend" ref="apy-trend" width="580px" type="line" :options="apyOptions" :series="apySeries"></apexchart>
           </v-card>
         </div>
     </div>
