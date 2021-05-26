@@ -13,6 +13,7 @@
         <div class="heading-6 ma-2 mb-2"><span style="color:#61ba89" class="mr-2">Active validators: </span>{{totalNominatedCount}}</div>
         <div class="heading-6 ma-2 mb-2"><span style="color:#61ba89" class="mr-2">1KV Nominators: </span>{{totalOneKvNominatorCount}}</div>
         <div class="heading-6 ma-2 mb-2"><span style="color:#61ba89" class="mr-2">1KV elected validators: </span>{{totalOneKvNominatedCount}}</div>
+        <div class="heading-6 ma-2 mb-2"><span style="color:#61ba89" class="mr-2">Last updated time from 1KV API: </span>{{lastUpdateTime}}</div>
         </div>
       </v-card>
       <v-data-table
@@ -66,6 +67,7 @@
 
 <script>
 const Yaohsin = require('../../scripts/yaohsin');
+const moment = require('moment');
 // const constants = require('../scripts/constants');
 export default {
   name: 'oneKValidator',
@@ -82,6 +84,7 @@ export default {
       totalElectedNominatorCount: 0,
       totalOneKvNominatedCount: 0,
       totalOneKvNominatorCount: 0,
+      lastUpdateTime: 0,
       isError: false,
 
       activeOnly: false,
@@ -120,6 +123,7 @@ export default {
     this.totalOneKvNominatorCount = oneKVNominators.length;
     this.totalValidatorCount = result.valid.length;
     this.totalNominatedCount = result.electedCount;
+    this.lastUpdateTime = moment.unix(result.modifiedTime).format('YYYY-MM-DD HH:mm:SS');
     this.oneKVStatus = result.valid;
     this.yaohsin.getOneKVDetailedInfo(this.coin).then((detail)=>{
       this.oneKVStatus = this.yaohsin.mergeOneKVList(this.oneKVStatus, detail.valid, oneKVNominators);
