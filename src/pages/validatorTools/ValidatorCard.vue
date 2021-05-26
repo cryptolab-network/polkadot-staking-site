@@ -31,7 +31,7 @@
         </div>
         <md-card-actions>
           <md-card-media>
-            <md-button v-if="coinName === 'KSM' && showVote" class="md-icon-button" @click="onClickVote(stash)">
+            <md-button v-if="showVote" class="md-icon-button" @click="onClickVote(stash)">
               <md-icon v-bind:class="{'favorite': voted}">how_to_vote</md-icon>
             </md-button>
             <md-button class="md-icon-button" @click="onClickFavorite(stash)">

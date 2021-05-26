@@ -137,7 +137,6 @@ export default {
       accounts: [],
       coinName: 'KSM',
       alertWalletConnectionFail: false,
-      coinSelected: false,
     };
   },
   methods: {
@@ -166,19 +165,13 @@ export default {
     },
     async onAccountSelected(selectedAccount) {
       console.log(selectedAccount);
-      this.selectedAddress = this.transformAddress(selectedAccount.address, 'KSM');
-      if(this.selectedAddress.charAt(0) === '1') {
-        this.coinName = 'DOT';
-      } else if(this.selectedAddress.charCodeAt(0) >= 65 && this.selectedAddress.charCodeAt(0) <= 90) {
-        this.coinName = 'KSM';
-      }
+      this.selectedAddress = this.transformAddress(selectedAccount.address, this.coinName);
       this.selectedAccount = selectedAccount;
       if(this.coinName === 'KSM') {
         const accountInfo = await kusamaRpc.getAccountInfo(this.selectedAddress);
         const sum = BigInt(accountInfo.data.free) +
             BigInt(accountInfo.data.reserved);
         console.log(this.selectedAddress);
-        this.coinName = 'KSM';
         this.selectedAccountFreeAmount = divide(sum, constants.KUSAMA_DECIMAL).toFixed(3);
         this.selectedAccountBondedAmount = divide(accountInfo.data.miscFrozen, constants.KUSAMA_DECIMAL).toFixed(3);
       } else {
@@ -186,8 +179,8 @@ export default {
         const sum = BigInt(accountInfo.data.free) +
             BigInt(accountInfo.data.reserved);
         console.log(this.selectedAddress);
-        this.coinName = 'DOT';
         this.selectedAccountFreeAmount = divide(sum, constants.POLKADOT_DECIMAL).toFixed(3);
+        this.selectedAccountBondedAmount = divide(accountInfo.data.miscFrozen, constants.POLKADOT_DECIMAL).toFixed(3);
       }
       localStorage.setItem('walletAddress', this.selectedAddress);
       EventBus.$emit('walletAddressChanged', this.selectedAddress);
@@ -200,20 +193,31 @@ export default {
       });
       localStorage.setItem('extensionAccounts', addresses);
     },
-
+    async getAccountsFromExtension(rpc) {
+      this.accounts = await rpc.getAccountsFromExtension();
+      if(this.accounts !== undefined && this.accounts.length > 0) {
+        this.walletConnected = true;
+        this.writeAccountsToLocalStorage();
+        this.onAccountSelected(this.accounts[0]);
+      } else {
+        this.walletConnected = false;
+        localStorage.removeItem('walletAddress');
+      }
+    }
   },
   mounted: async function() {
     await kusamaRpc.connect();
     await polkadotRpc.connect();
-    this.accounts = await kusamaRpc.getAccountsFromExtension();
-    if(this.accounts !== undefined && this.accounts.length > 0) {
-      this.walletConnected = true;
-      this.writeAccountsToLocalStorage();
-      this.onAccountSelected(this.accounts[0]);
-    } else {
-      this.walletConnected = false;
-      localStorage.removeItem('walletAddress');
-    }
+    await this.getAccountsFromExtension(kusamaRpc);
+    EventBus.$on('coinNameChanged', (coinName)=>{
+      if(coinName === 'DOT') {
+        this.coinName = 'DOT';
+        this.getAccountsFromExtension(polkadotRpc);
+      } else {
+        this.coinName = 'KSM';
+        this.getAccountsFromExtension(kusamaRpc);
+      }
+    })
   },
   watch:{
     $route (to){
@@ -232,13 +236,6 @@ export default {
         }
       }
     },
-  coinSelected (status) {
-    if(status) {
-      this.coinName = 'DOT';
-    } else {
-      this.coinName = 'KSM';
-    }
-  }
   },
   components: {
     Identicon,

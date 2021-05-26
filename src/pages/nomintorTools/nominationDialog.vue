@@ -54,7 +54,7 @@
                   <v-btn @click="becomeNominator" color="#61ba89" class="white--text" v-if="bondedAmount === 0 && role !== 'Not a Nominator' && !showBondBox">Bond</v-btn>
                   <v-text-field
                     v-model="amountToBond"
-                    label="Amount (KSM)"
+                    label="Amount"
                     v-if="showBondBox"
                     :rules="validateBondAmount"
                     class="shrink mt-2"
@@ -216,8 +216,13 @@ export default {
           const accountInfo = await this.rpc.getAccountInfo(this.walletAddress);
           const sum = BigInt(accountInfo.data.free) +
             BigInt(accountInfo.data.reserved);
-          this.totalAmount = parseFloat(divide(sum, constants.KUSAMA_DECIMAL).toFixed(3));
-          this.bondedAmount = accountInfo.data.miscFrozen.toNumber() / constants.KUSAMA_DECIMAL;
+          if(this.coinName === 'KSM') {
+            this.totalAmount = parseFloat(divide(sum, constants.KUSAMA_DECIMAL).toFixed(3));
+            this.bondedAmount = accountInfo.data.miscFrozen.toNumber() / constants.KUSAMA_DECIMAL;
+          } else {
+            this.totalAmount = parseFloat(divide(sum, constants.POLKADOT_DECIMAL).toFixed(3));
+            this.bondedAmount = accountInfo.data.miscFrozen.toNumber() / constants.POLKADOT_DECIMAL;
+          }
           console.log(this.totalAmount, this.bondedAmount);
           this.amountToBond = this.bondedAmount.toString();
           if(accountInfo.data.miscFrozen.toNumber() === 0) {

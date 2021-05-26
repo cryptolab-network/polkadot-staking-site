@@ -102,7 +102,9 @@
 <script>
 const Yaohsin = require('../../scripts/yaohsin');
 const kusamaRpc = require('../../scripts/polkadot').kusamaRpc;
+const polkadotRpc = require('../../scripts/polkadot').polkadotRpc;
 const constants = require('../../scripts/constants');
+import { EventBus } from '../../main';
 import ValidatorCard from './ValidatorCard.vue';
 import AnalyticsDialog from './AnalyticsDialog.vue';
 import SortOptionDialog from './SortOptionDialog.vue';
@@ -140,7 +142,13 @@ export default {
   mounted: async function() {
     this.showProgressBar = true;
     const yaohsin = new Yaohsin();
-    this.rpc = kusamaRpc;
+    EventBus.$emit('coinNameChanged', this.coin);
+    if(this.coin === 'KSM') {
+      this.rpc = kusamaRpc;
+    } else {
+      this.rpc = polkadotRpc;
+    }
+    
     let result = undefined;
     result = await yaohsin.getAllValidatorAndNominators({coin: this.coin}).catch(()=>{
         this.isError = true;
@@ -188,6 +196,7 @@ export default {
     );
     this.sortByCommissionChange();
     this.sortByFavorite();
+    
     this.showProgressBar = false;
     yaohsin.getAllNominators({coin: this.coin}).then((nominators)=>{
       this.nominators = nominators;
