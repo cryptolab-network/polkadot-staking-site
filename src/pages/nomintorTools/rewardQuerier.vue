@@ -44,6 +44,7 @@
             <td>
               <div class="d-flex flex-row">
                 <div class='total-rewards'>{{totalRewards.toFixed(4)}} {{coinName}}</div>
+                <div><span class='md-caption era-caption total-rewards ml-4'>~= {{totalInFiat.toFixed(4)}} {{ selectedCurrency }}</span></div>
                 <div><span class="md-caption era-caption">(From <i>{{startDate}}</i> to <i>{{endDate}}</i>)</span></div>
               </div>
             </td>
@@ -87,7 +88,7 @@
                         ref="menu"
                         v-model="menu"
                         :close-on-content-click="false"
-                        :return-value.sync="startDate"
+                        :return-value.sync="startDateConfig"
                         transition="scale-transition"
                         offset-y
                         min-width="auto"
@@ -95,7 +96,7 @@
                         <template v-slot:activator="{ on, attrs }">
                           <v-text-field
                             class="date-picker"
-                            v-model="startDate"
+                            v-model="startDateConfig"
                             label="Start Date"
                             prepend-icon="mdi-calendar"
                             readonly
@@ -104,22 +105,22 @@
                           ></v-text-field>
                         </template>
                         <v-date-picker
-                          v-model="startDate"
+                          v-model="startDateConfig"
                           no-title
                           scrollable
                         >
                           <v-spacer></v-spacer>
                           <v-btn
                             text
-                            color="primary"
+                            color="#61ba89"
                             @click="menu = false"
                           >
                             Cancel
                           </v-btn>
                           <v-btn
                             text
-                            color="primary"
-                            @click="onStartDateSelected(startDate)"
+                            color="#61ba89"
+                            @click="onStartDateSelected(startDateConfig)"
                           >
                             OK
                           </v-btn>
@@ -129,7 +130,7 @@
                         ref="menu2"
                         v-model="menu2"
                         :close-on-content-click="false"
-                        :return-value.sync="endDate"
+                        :return-value.sync="endDateConfig"
                         transition="scale-transition"
                         offset-y
                         min-width="auto"
@@ -137,7 +138,7 @@
                         <template v-slot:activator="{ on, attrs }">
                           <v-text-field
                             class="date-picker"
-                            v-model="endDate"
+                            v-model="endDateConfig"
                             label="End Date"
                             prepend-icon="mdi-calendar"
                             readonly
@@ -146,7 +147,7 @@
                           ></v-text-field>
                         </template>
                         <v-date-picker
-                          v-model="endDate"
+                          v-model="endDateConfig"
                           no-title
                           scrollable
                         >
@@ -160,7 +161,7 @@
                           <v-btn
                             text
                             color="#61ba89"
-                            @click="onEndDateSelected(endDate)"
+                            @click="onEndDateSelected(endDateConfig)"
                           >
                             OK
                           </v-btn>
@@ -278,6 +279,8 @@ export default {
       totalRewards: 0,
       startDate:  moment('2020-01-01').format("YYYY-MM-DD"),
       endDate: moment().format("YYYY-MM-DD"),
+      startDateConfig:  moment('2020-01-01').format("YYYY-MM-DD"),
+      endDateConfig: moment().format("YYYY-MM-DD"),
       inDelay: false,
       historicalQuery: [],
       showSnakeBar: false,
@@ -292,6 +295,7 @@ export default {
       menu2: "",
       startBalance: 0.1,
       selectedCurrency: 'USD',
+      totalInFiat: 0.0,
 
       itemsPerPageOptions: [10, 20, 50, -1],
       eraRewardHeaders: [
@@ -418,7 +422,7 @@ export default {
         this.invalidFilter = true;
         return;
       }
-      if(moment(startDate).isAfter(moment(this.endDate))) {
+      if(moment(startDate).isAfter(moment(this.endDateConfig))) {
         this.menu = false;
         this.invalidFilter = true;
         return;
@@ -433,7 +437,7 @@ export default {
         this.invalidFilter = true;
         return;
       }
-      if(moment(this.startDate).isAfter(moment(endDate))) {
+      if(moment(this.startDateConfig).isAfter(moment(endDate))) {
         this.menu2 = false;
         this.invalidFilter = true;
         return;
@@ -464,8 +468,8 @@ export default {
       } else if(stash.charCodeAt(0) >= 65 && stash.charCodeAt(0) <= 90) {
         this.coinName = 'KSM';
       }
-      const eraRewards = await this.yaohsin.getStashRewardsCollector(stash, {coin: this.coinName, startDate: this.startDate,
-      endDate: this.endDate, startBalance: this.startBalance, currency: this.selectedCurrency});
+      const eraRewards = await this.yaohsin.getStashRewardsCollector(stash, {coin: this.coinName, startDate: this.startDateConfig,
+      endDate: this.endDateConfig, startBalance: this.startBalance, currency: this.selectedCurrency});
       if(eraRewards !== undefined) {
         this.isStashValid = true;
         this.saveQueriedRecords(stash);
@@ -473,6 +477,7 @@ export default {
         this.eraRewards = this.mergeEraRewards(eraRewards.eraRewards);
         console.log(this.eraRewards);
         this.stash = eraRewards.stash;
+        this.totalInFiat = eraRewards.totalInFiat;
       } else {
         this.showSnakeBar = true;
         this.isStashValid = false;
@@ -516,6 +521,8 @@ export default {
   },
   watch: {
     selectedStash: async function(stash) {
+      this.startDateConfig = moment('2020-01-01').format("YYYY-MM-DD");
+      this.endDateConfig = moment().format("YYYY-MM-DD");
       await this.query(stash);
     }
   },
