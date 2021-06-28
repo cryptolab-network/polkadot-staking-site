@@ -9,6 +9,39 @@
           </md-field>
         </div>
         <div class='md-toolbar-section-end'> 
+          <md-button class="md-icon-button" @click="showHelp = true">
+            <md-icon>help</md-icon>
+          </md-button>
+          <md-dialog :md-active.sync="showHelp" style="width=50vw">
+            <md-dialog-title class="header-card-light" style="padding-bottom:24px">
+              Help
+            </md-dialog-title>
+            <md-dialog-content>
+              <div class="help-text md-subheading"> To use the Staking Rewards Report, </div>
+              <md-content style="margin-top:12px;margin-bottom:12px;margin-left:12px;margin-right:12px;" >
+                <img src="../../assets/staking-rewards-guide-1.png" style="border:1px solid;" width="1024px">
+              </md-content>
+              <div style="margin-left:12px;margin-bottom:12px">
+                <ul>
+                <div class="help-text md-subheading"> <li> Input either a Polkadot or a Kusama Address on the Search field </li></div>
+                <div class="help-text md-subheading"> <li> Click <md-icon>file_download</md-icon> button to export staking rewards report.</li></div>
+                <div class="help-text md-subheading"> <li> Click <md-icon>sort</md-icon> button to set criteria of staking rewards report.</li></div>
+                <div class="help-text md-body-1" style="margin-left: 24px"> 
+                  <ul>
+                    <li class="help-text"> Select the first Date of Staking Rewards. Default is 2020-01-01.</li>
+                    <li class="help-text"> Select the last Date of Staking Rewards. Default is the date of today.</li>
+                    <li class="help-text"> Select the currency of Staking Rewards. The available currencies are as Coingecko supported.</li>
+                    <li class="help-text"> Select the Start Balance of Staking Rewards. This is used for calculating annaulized return which would be exported in the Staking Rewards Collector JSON. </li>
+                  </ul>
+                  <img src="../../assets/staking-rewards-guide-2.png" width="300px">
+                </div>
+                </ul>
+              </div>
+            </md-dialog-content>
+            <md-dialog-actions>
+              <md-button class="" @click="showHelp = false">OK</md-button>
+            </md-dialog-actions>
+          </md-dialog>
         </div>
       </div>
   </md-toolbar>
@@ -42,10 +75,10 @@
           <tr>
             <td>Total Rewards</td>
             <td>
-              <div class="d-flex flex-row">
+              <div class="md-layout">
                 <div class='total-rewards'>{{totalRewards.toFixed(4)}} {{coinName}}</div>
-                <div><span class='md-caption era-caption total-rewards ml-4'>~= {{totalInFiat.toFixed(4)}} {{ selectedCurrency }}</span></div>
-                <div><span class="md-caption era-caption">(From <i>{{startDate}}</i> to <i>{{endDate}}</i>)</span></div>
+                <div><span class='md-layout-item md-caption era-caption total-rewards'>{{totalInFiat.toFixed(4)}} {{ selectedCurrency }}</span></div>
+                <div><span class="md-layout-item md-caption era-caption">(From <i>{{startDate}}</i> to <i>{{endDate}}</i>)</span></div>
               </div>
             </td>
           </tr>
@@ -56,140 +89,140 @@
       <div class='md-layout-item md-medium-size-55 md-medium-size-100 md-xsmall-size-100'>
         <div class="md-title stash-info-title pt-4 pl-4 header-card-light" >
           <div class="md-layout pb-2">
-            <div class="md-layout-item md-size-20 mt-1">Era Rewards</div>
-            <div class="md-layout-item"></div>
-            <md-menu class="md-layout-item md-size-5" md-direction="bottom-start">
-            <md-button class="md-icon-button" md-menu-trigger>
-              <md-icon style="color:#fafafa; cursor:pointer; text-align:right" class="header-card-light">file_download</md-icon>
-            </md-button>
-            <md-menu-content>
-              <md-menu-item style="cursor:pointer">
-                <download-csv
-                  :data = "eraRewards">
-                  Download Era Rewards
-                </download-csv>
-              </md-menu-item>
-              <md-menu-item style="cursor:pointer" @click="onDownloadSrcCsv">
-                Staking Rewards Collector CSV
-              </md-menu-item>
-              <md-menu-item style="cursor:pointer" @click="onDownloadSrcJson">
-                Staking Rewards Collector JSON
-              </md-menu-item>
-            </md-menu-content>
-          </md-menu>
-          <md-button class="md-icon-button" @click="onClickFilter">
-              <md-icon style="color:#fafafa;" id="search-icon">filter_alt</md-icon>
-          </md-button>
-          <md-dialog :md-active.sync="showFilter">
-            <md-dialog-title>Preferences</md-dialog-title>
-            <div class="d-flex flex-column ma-8">
-                <template>
-                      <v-menu
-                        ref="menu"
-                        v-model="menu"
-                        :close-on-content-click="false"
-                        :return-value.sync="startDateConfig"
-                        transition="scale-transition"
-                        offset-y
-                        min-width="auto"
-                      >
-                        <template v-slot:activator="{ on, attrs }">
-                          <v-text-field
-                            class="date-picker"
-                            v-model="startDateConfig"
-                            label="Start Date"
-                            prepend-icon="mdi-calendar"
-                            readonly
-                            v-bind="attrs"
-                            v-on="on"
-                          ></v-text-field>
-                        </template>
-                        <v-date-picker
-                          v-model="startDateConfig"
-                          no-title
-                          scrollable
-                        >
-                          <v-spacer></v-spacer>
-                          <v-btn
-                            text
-                            color="#61ba89"
-                            @click="menu = false"
+            <div class="md-layout-item md-xsmall-size-40 md-size-20 mt-1">Era Rewards</div>
+            <div class="md-layout-item md-xsmall-size-30 md-size-70"></div>
+            <md-menu class="md-layout-item md-layout" md-direction="bottom-start">
+              <md-button class="md-layout-item md-icon-button" md-menu-trigger>
+                <md-icon style="color:#fafafa; cursor:pointer; text-align:right" class="header-card-light">file_download</md-icon>
+              </md-button>
+              <md-menu-content>
+                <md-menu-item style="cursor:pointer">
+                  <download-csv
+                    :data = "eraRewards">
+                    Download Era Rewards
+                  </download-csv>
+                </md-menu-item>
+                <md-menu-item style="cursor:pointer" @click="onDownloadSrcCsv">
+                  Staking Rewards Collector CSV
+                </md-menu-item>
+                <md-menu-item style="cursor:pointer" @click="onDownloadSrcJson">
+                  Staking Rewards Collector JSON
+                </md-menu-item>
+              </md-menu-content>
+              <md-button class="md-layout-item md-icon-button" @click="onClickFilter">
+                <md-icon style="color:#fafafa;" id="search-icon">sort</md-icon>
+              </md-button>
+              <md-dialog :md-active.sync="showFilter">
+                <md-dialog-title class="header-card-light" style="padding-bottom:24px">Preferences</md-dialog-title>
+                <div class="d-flex flex-column ma-8">
+                    <template>
+                          <v-menu
+                            ref="menu"
+                            v-model="menu"
+                            :close-on-content-click="false"
+                            :return-value.sync="startDateConfig"
+                            transition="scale-transition"
+                            offset-y
+                            min-width="auto"
                           >
-                            Cancel
-                          </v-btn>
-                          <v-btn
-                            text
-                            color="#61ba89"
-                            @click="onStartDateSelected(startDateConfig)"
+                            <template v-slot:activator="{ on, attrs }">
+                              <v-text-field
+                                class="date-picker"
+                                v-model="startDateConfig"
+                                label="Start Date"
+                                prepend-icon="mdi-calendar"
+                                readonly
+                                v-bind="attrs"
+                                v-on="on"
+                              ></v-text-field>
+                            </template>
+                            <v-date-picker
+                              v-model="startDateConfig"
+                              no-title
+                              scrollable
+                            >
+                              <v-spacer></v-spacer>
+                              <v-btn
+                                text
+                                color="#61ba89"
+                                @click="menu = false"
+                              >
+                                Cancel
+                              </v-btn>
+                              <v-btn
+                                text
+                                color="#61ba89"
+                                @click="onStartDateSelected(startDateConfig)"
+                              >
+                                OK
+                              </v-btn>
+                            </v-date-picker>
+                          </v-menu>
+                          <v-menu
+                            ref="menu2"
+                            v-model="menu2"
+                            :close-on-content-click="false"
+                            :return-value.sync="endDateConfig"
+                            transition="scale-transition"
+                            offset-y
+                            min-width="auto"
                           >
-                            OK
-                          </v-btn>
-                        </v-date-picker>
-                      </v-menu>
-                      <v-menu
-                        ref="menu2"
-                        v-model="menu2"
-                        :close-on-content-click="false"
-                        :return-value.sync="endDateConfig"
-                        transition="scale-transition"
-                        offset-y
-                        min-width="auto"
-                      >
-                        <template v-slot:activator="{ on, attrs }">
-                          <v-text-field
-                            class="date-picker"
-                            v-model="endDateConfig"
-                            label="End Date"
-                            prepend-icon="mdi-calendar"
-                            readonly
-                            v-bind="attrs"
-                            v-on="on"
-                          ></v-text-field>
-                        </template>
-                        <v-date-picker
-                          v-model="endDateConfig"
-                          no-title
-                          scrollable
-                        >
-                          <v-spacer></v-spacer>
-                          <v-btn
-                            text
-                            @click="menu2 = false"
-                          >
-                            Cancel
-                          </v-btn>
-                          <v-btn
-                            text
-                            color="#61ba89"
-                            @click="onEndDateSelected(endDateConfig)"
-                          >
-                            OK
-                          </v-btn>
-                        </v-date-picker>
-                      </v-menu>
-                </template>
-                <template>
-                  <v-select
-                    class="date-picker"
-                    prepend-icon="mdi-cash-multiple"
-                    v-model="selectedCurrency"
-                    :items="supportedCurrencies"
-                    label="Currency"
-                  ></v-select>
-                </template>
-                <v-text-field
-                  class="date-picker"
-                  prepend-icon="mdi-cash-multiple"
-                  label="Start Balance"
-                  v-model="startBalance"
-                  :suffix="coinName"
-                ></v-text-field>
-            </div>
-            <md-dialog-actions>
-              <md-button class="" @click="showFilter = false">Cancel</md-button>
-              <md-button style="color:#61ba89;" :disabled="invalidFilter" @click="onFilterSet">Save</md-button>
-            </md-dialog-actions>
-          </md-dialog>
+                            <template v-slot:activator="{ on, attrs }">
+                              <v-text-field
+                                class="date-picker"
+                                v-model="endDateConfig"
+                                label="End Date"
+                                prepend-icon="mdi-calendar"
+                                readonly
+                                v-bind="attrs"
+                                v-on="on"
+                              ></v-text-field>
+                            </template>
+                            <v-date-picker
+                              v-model="endDateConfig"
+                              no-title
+                              scrollable
+                            >
+                              <v-spacer></v-spacer>
+                              <v-btn
+                                text
+                                @click="menu2 = false"
+                              >
+                                Cancel
+                              </v-btn>
+                              <v-btn
+                                text
+                                color="#61ba89"
+                                @click="onEndDateSelected(endDateConfig)"
+                              >
+                                OK
+                              </v-btn>
+                            </v-date-picker>
+                          </v-menu>
+                    </template>
+                    <template>
+                      <v-select
+                        class="date-picker"
+                        prepend-icon="mdi-cash-multiple"
+                        v-model="selectedCurrency"
+                        :items="supportedCurrencies"
+                        label="Currency"
+                      ></v-select>
+                    </template>
+                    <v-text-field
+                      class="date-picker"
+                      prepend-icon="mdi-cash-multiple"
+                      label="Start Balance"
+                      v-model="startBalance"
+                      :suffix="coinName"
+                    ></v-text-field>
+                </div>
+                <md-dialog-actions>
+                  <md-button class="" @click="showFilter = false">Cancel</md-button>
+                  <md-button style="color:#61ba89;" :disabled="invalidFilter" @click="onFilterSet">Save</md-button>
+                </md-dialog-actions>
+              </md-dialog>
+            </md-menu>
           </div>
         </div>
         <v-data-table
@@ -290,6 +323,7 @@ export default {
       isLoading: false,
       showFilter: false,
       invalidFilter: false,
+      showHelp: false,
 
       menu: "",
       menu2: "",
@@ -585,10 +619,11 @@ export default {
   padding-left: 8px;
 }
 .era-caption {
-  padding-left: 12px;
+  // padding-left: 12px;
   display: inline-block;
 }
-.total-reward {
+.total-rewards {
+  padding-right: 12px;
   display: inline-block;
 }
 
@@ -622,7 +657,16 @@ export default {
     margin-right: 16px !important;
   }
 
-  ::v-deep .v-select.v-input__control.v-input__slot {
-    margin-left: 12px !important;
+  ::v-deep .v-select__selections {
+    padding-left: 8px;
   }
+  ::v-deep .v-input input {
+    padding-left: 8px;
+  }
+
+  .help-text {
+    margin-left:4px;
+    margin-bottom: 8px; 
+  }
+
 </style>
