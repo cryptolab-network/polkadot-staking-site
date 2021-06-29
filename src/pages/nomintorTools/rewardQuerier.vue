@@ -480,10 +480,12 @@ export default {
       }
       this.$refs['menu2'].save(endDate);
     },
-    onFilterSet: function() {
+    onFilterSet: async function() {
       this.showFilter = false;
       if(this.stash.length > 0) {
-        this.query(this.stash);
+        this.isLoading = true;
+        await this.query(this.stash);
+        this.isLoading = false;
       }
     },
     query: async function(stash) {
@@ -495,7 +497,7 @@ export default {
       setTimeout(()=>{
         this.inDelay = false;
       }, 1000);
-      this.isLoading = true;
+
       this.showSnakeBar = false;
       if(stash.startsWith('1')) {
         this.coinName = 'DOT';
@@ -534,7 +536,6 @@ export default {
         }
         return header;
       });
-      this.isLoading = false;
     },
     onDownloadSrcCsv: async function() {
       if(this.stash.startsWith('1')) {
@@ -557,7 +558,9 @@ export default {
     selectedStash: async function(stash) {
       this.startDateConfig = moment('2020-01-01').format("YYYY-MM-DD");
       this.endDateConfig = moment().format("YYYY-MM-DD");
+      this.isLoading = true;
       await this.query(stash);
+      this.isLoading = false;
     }
   },
   components: {
