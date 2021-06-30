@@ -92,7 +92,7 @@
             <div class="md-layout-item md-xsmall-size-40 md-size-20 mt-1">Era Rewards</div>
             <div class="md-layout-item md-xsmall-size-30 md-size-70"></div>
             <md-menu class="md-layout-item md-layout" md-direction="bottom-start">
-              <md-button class="md-layout-item md-icon-button" md-menu-trigger>
+              <md-button class="md-layout-item md-icon-button" md-menu-trigger v-if="!$isMobile()">
                 <md-icon style="color:#fafafa; cursor:pointer; text-align:right" class="header-card-light">file_download</md-icon>
               </md-button>
               <md-menu-content>
