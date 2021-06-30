@@ -143,7 +143,7 @@ export default {
     vertical-align: top;
   }
   .md-title {
-    font-size: 8px;
+    font-size: 10px;
     word-break: break-all;
   }
   .inactive-validator {

@@ -2,12 +2,47 @@
 <div id="reward-querier">
   <md-toolbar>
       <div class="md-toolbar-row">
-      <div class='md-toolbar-section-start search-bar '> 
-        <md-icon id="search-icon">search</md-icon>
-        <md-field>
-          <md-autocomplete md-input-placeholder="Search for Stash ID" v-model="selectedStash" :md-options="historicalQuery"></md-autocomplete>
-        </md-field>
-      </div>
+        <div class='md-toolbar-section-start search-bar '> 
+          <md-icon id="search-icon">search</md-icon>
+          <md-field>
+            <md-autocomplete md-input-placeholder="Search for Stash ID" v-model="selectedStash" :md-options="historicalQuery"></md-autocomplete>
+          </md-field>
+        </div>
+        <div class='md-toolbar-section-end'> 
+          <md-button class="md-icon-button" @click="showHelp = true">
+            <md-icon>help</md-icon>
+          </md-button>
+          <md-dialog :md-active.sync="showHelp" style="width=50vw">
+            <md-dialog-title class="header-card-light" style="padding-bottom:24px">
+              Help
+            </md-dialog-title>
+            <md-dialog-content>
+              <div class="help-text md-subheading"> To use the Staking Rewards Report, </div>
+              <md-content style="margin-top:12px;margin-bottom:12px;margin-left:12px;margin-right:12px;" >
+                <img src="../../assets/staking-rewards-guide-1.png" style="border:1px solid;" width="1024px">
+              </md-content>
+              <div style="margin-left:12px;margin-bottom:12px">
+                <ul>
+                <div class="help-text md-subheading"> <li> Input either a Polkadot or a Kusama Address on the Search field </li></div>
+                <div class="help-text md-subheading"> <li> Click <md-icon>file_download</md-icon> button to export staking rewards report.</li></div>
+                <div class="help-text md-subheading"> <li> Click <md-icon>sort</md-icon> button to set criteria of staking rewards report.</li></div>
+                <div class="help-text md-body-1" style="margin-left: 24px"> 
+                  <ul>
+                    <li class="help-text"> Select the first Date of Staking Rewards. Default is 2020-01-01.</li>
+                    <li class="help-text"> Select the last Date of Staking Rewards. Default is the date of today.</li>
+                    <li class="help-text"> Select the currency of Staking Rewards. The available currencies are as Coingecko supported.</li>
+                    <li class="help-text"> Select the Start Balance of Staking Rewards. This is used for calculating annaulized return which would be exported in the Staking Rewards Collector JSON. </li>
+                  </ul>
+                  <img src="../../assets/staking-rewards-guide-2.png" width="300px">
+                </div>
+                </ul>
+              </div>
+            </md-dialog-content>
+            <md-dialog-actions>
+              <md-button class="" @click="showHelp = false">OK</md-button>
+            </md-dialog-actions>
+          </md-dialog>
+        </div>
       </div>
   </md-toolbar>
   <v-layout class="pt-8" v-if="isLoading" justify-center align-center>
@@ -40,9 +75,10 @@
           <tr>
             <td>Total Rewards</td>
             <td>
-              <div class="d-flex flex-row">
+              <div class="md-layout">
                 <div class='total-rewards'>{{totalRewards.toFixed(4)}} {{coinName}}</div>
-                <div><span class="md-caption era-caption">(From <i>{{startDate}}</i> to <i>{{endDate}}</i>)</span></div>
+                <div><span class='md-layout-item md-caption era-caption total-rewards'>{{totalInFiat.toFixed(4)}} {{ selectedCurrency }}</span></div>
+                <div><span class="md-layout-item md-caption era-caption">(From <i>{{startDate}}</i> to <i>{{endDate}}</i>)</span></div>
               </div>
             </td>
           </tr>
@@ -51,14 +87,142 @@
     </v-simple-table>
     <div class='md-layout md-alignment-top md-gutter'>
       <div class='md-layout-item md-medium-size-55 md-medium-size-100 md-xsmall-size-100'>
-        <div class="md-title stash-info-title pt-4 pb-4 pl-4 header-card-light" >
-          <div class="md-layout">
-            <div class="md-layout-item">Era Rewards</div>
-            <download-csv
-              :data = "eraRewards">
-              <md-icon style="color:#fafafa; cursor:pointer" class="md-layout-item pt-4 pb-4 pr-8 header-card-light">file_download</md-icon>
-              <md-tooltip md-direction="bottom">Export rewards as CSV</md-tooltip>
-            </download-csv>
+        <div class="md-title stash-info-title pt-4 pl-4 header-card-light" >
+          <div class="md-layout pb-2">
+            <div class="md-layout-item md-xsmall-size-40 md-size-20 mt-1">Era Rewards</div>
+            <div class="md-layout-item md-xsmall-size-30 md-size-70"></div>
+            <md-menu class="md-layout-item md-layout" md-direction="bottom-start">
+              <md-button class="md-layout-item md-icon-button" md-menu-trigger>
+                <md-icon style="color:#fafafa; cursor:pointer; text-align:right" class="header-card-light">file_download</md-icon>
+              </md-button>
+              <md-menu-content>
+                <md-menu-item style="cursor:pointer">
+                  <download-csv
+                    :data = "eraRewards">
+                    Download Era Rewards
+                  </download-csv>
+                </md-menu-item>
+                <md-menu-item style="cursor:pointer" @click="onDownloadSrcCsv">
+                  Staking Rewards Collector CSV
+                </md-menu-item>
+                <md-menu-item style="cursor:pointer" @click="onDownloadSrcJson">
+                  Staking Rewards Collector JSON
+                </md-menu-item>
+              </md-menu-content>
+              <md-button class="md-layout-item md-icon-button" @click="onClickFilter">
+                <md-icon style="color:#fafafa;" id="search-icon">sort</md-icon>
+              </md-button>
+              <md-dialog :md-active.sync="showFilter">
+                <md-dialog-title class="header-card-light" style="padding-bottom:24px">Preferences</md-dialog-title>
+                <div class="d-flex flex-column ma-8">
+                    <template>
+                          <v-menu
+                            ref="menu"
+                            v-model="menu"
+                            :close-on-content-click="false"
+                            :return-value.sync="startDateConfig"
+                            transition="scale-transition"
+                            offset-y
+                            min-width="auto"
+                          >
+                            <template v-slot:activator="{ on, attrs }">
+                              <v-text-field
+                                class="date-picker"
+                                v-model="startDateConfig"
+                                label="Start Date"
+                                prepend-icon="mdi-calendar"
+                                readonly
+                                v-bind="attrs"
+                                v-on="on"
+                              ></v-text-field>
+                            </template>
+                            <v-date-picker
+                              v-model="startDateConfig"
+                              no-title
+                              scrollable
+                            >
+                              <v-spacer></v-spacer>
+                              <v-btn
+                                text
+                                color="#61ba89"
+                                @click="menu = false"
+                              >
+                                Cancel
+                              </v-btn>
+                              <v-btn
+                                text
+                                color="#61ba89"
+                                @click="onStartDateSelected(startDateConfig)"
+                              >
+                                OK
+                              </v-btn>
+                            </v-date-picker>
+                          </v-menu>
+                          <v-menu
+                            ref="menu2"
+                            v-model="menu2"
+                            :close-on-content-click="false"
+                            :return-value.sync="endDateConfig"
+                            transition="scale-transition"
+                            offset-y
+                            min-width="auto"
+                          >
+                            <template v-slot:activator="{ on, attrs }">
+                              <v-text-field
+                                class="date-picker"
+                                v-model="endDateConfig"
+                                label="End Date"
+                                prepend-icon="mdi-calendar"
+                                readonly
+                                v-bind="attrs"
+                                v-on="on"
+                              ></v-text-field>
+                            </template>
+                            <v-date-picker
+                              v-model="endDateConfig"
+                              no-title
+                              scrollable
+                            >
+                              <v-spacer></v-spacer>
+                              <v-btn
+                                text
+                                @click="menu2 = false"
+                              >
+                                Cancel
+                              </v-btn>
+                              <v-btn
+                                text
+                                color="#61ba89"
+                                @click="onEndDateSelected(endDateConfig)"
+                              >
+                                OK
+                              </v-btn>
+                            </v-date-picker>
+                          </v-menu>
+                    </template>
+                    <template>
+                      <v-select
+                        class="date-picker"
+                        prepend-icon="mdi-cash-multiple"
+                        v-model="selectedCurrency"
+                        :items="supportedCurrencies"
+                        label="Currency"
+                      ></v-select>
+                    </template>
+                    <v-text-field
+                      class="date-picker"
+                      prepend-icon="mdi-cash-multiple"
+                      label="Start Balance"
+                      v-model="startBalance"
+                      :suffix="coinName"
+                    ></v-text-field>
+                </div>
+                <md-dialog-actions>
+                  <md-button class="" @click="showFilter = false">Cancel</md-button>
+                  <md-button style="color:#61ba89;" :disabled="invalidFilter" @click="onFilterSet">Save</md-button>
+                </md-dialog-actions>
+              </md-dialog>
+            </md-menu>
           </div>
         </div>
         <v-data-table
@@ -72,7 +236,7 @@
           :mobile-breakpoint=0
           class="elevation-2 era-reward-table mb-4 mt-4">
           <template v-slot:[`item.amount`]="{ item }">
-              {{ item.amount > 0.0001? item.amount.toFixed(4): '~0.0001' }} {{coinName}}
+              {{ item.amount > 0.0001? item.amount.toFixed(4): '0' }} {{coinName}}
           </template>
         </v-data-table>
       </div>
@@ -146,8 +310,10 @@ export default {
       isStashValid: false,
       stash: '',
       totalRewards: 0,
-      startDate: 0,
-      endDate: 0,
+      startDate:  moment('2020-01-01').format("YYYY-MM-DD"),
+      endDate: moment().format("YYYY-MM-DD"),
+      startDateConfig:  moment('2020-01-01').format("YYYY-MM-DD"),
+      endDateConfig: moment().format("YYYY-MM-DD"),
       inDelay: false,
       historicalQuery: [],
       showSnakeBar: false,
@@ -155,18 +321,73 @@ export default {
       localStorageKey: 'queriedStashes',
       validators: [],
       isLoading: false,
+      showFilter: false,
+      invalidFilter: false,
+      showHelp: false,
+
+      menu: "",
+      menu2: "",
+      startBalance: 0.1,
+      selectedCurrency: 'USD',
+      totalInFiat: 0.0,
 
       itemsPerPageOptions: [10, 20, 50, -1],
       eraRewardHeaders: [
-        {
-          text: 'Era',
-          value: 'era',
-        },
         { text: 'Payout Date', value: 'date' },
         { text: 'Amount', value: 'amount' },
-        { text: 'Price (USD)', value: 'price' },
-        { text: 'Total (USD)', value: 'total'}
+        { text: `Price (USD)`, value: 'price' },
+        { text: `Total (USD)`, value: 'total'}
       ],
+
+      supportedCurrencies: [
+        "usd",
+        "aed",
+        "ars",
+        "aud",
+        "bdt",
+        "bhd",
+        "bmd",
+        "brl",
+        "cad",
+        "chf",
+        "clp",
+        "cny",
+        "czk",
+        "dkk",
+        "eur",
+        "gbp",
+        "hkd",
+        "huf",
+        "idr",
+        "ils",
+        "inr",
+        "jpy",
+        "krw",
+        "kwd",
+        "lkr",
+        "mmk",
+        "mxn",
+        "myr",
+        "ngn",
+        "nok",
+        "nzd",
+        "php",
+        "pkr",
+        "pln",
+        "rub",
+        "sar",
+        "sek",
+        "sgd",
+        "thb",
+        "try",
+        "twd",
+        "uah",
+        "vef",
+        "vnd",
+        "zar",
+      ].map((c) => {
+        return c.toUpperCase();
+      }),
     }
   },
   methods: {
@@ -210,46 +431,64 @@ export default {
           this.endDate = reward.timestamp;
         }
       });
-      this.startDate = moment(this.startDate).format('L');
-      this.endDate = moment(this.endDate).format('L');
+      this.startDate = moment(this.startDate).format('YYYY-MM-DD');
+      this.endDate = moment(this.endDate).format('YYYY-MM-DD');
     },
     mergeEraRewards(eraRewards) {
-      const _eraRewards = {};
-      eraRewards.map((reward)=>{
-        if(_eraRewards[reward.era] === undefined){
-          _eraRewards[reward.era] = {
-            amount: reward.amount,
-            timestamp: reward.timestamp,
-            price: reward.price,
-            total: reward.total,
-          }
-        } else {
-          _eraRewards[reward.era].amount += reward.amount;
-          _eraRewards[reward.era].total += reward.total;
-        }
+      return eraRewards.map((era)=>{
+        era.date = moment.utc(era.timestamp).format('L');
+        era.total = era.total.toFixed(2);
+        return era;
       });
-      let result = [];
-      Object.keys(_eraRewards).map((era)=>{
-        result.push({
-          era: era,
-          amount: _eraRewards[era].amount,
-          date: moment.utc(_eraRewards[era].timestamp).format('L'),
-          price: _eraRewards[era].price.toFixed(3),
-          total: _eraRewards[era].total.toFixed(3),
-        })
-      });
-      result.reverse();
-      return result;
     },
     commissionChange: function(validator) {
       if(validator.statusChange !== undefined) {
         return validator.statusChange.commission;
       }
       return 0;
-    }
-  },
-  watch: {
-    selectedStash: async function(stash) {
+    },
+    onClickFilter: function() {
+      this.showFilter = true;
+    },
+    onStartDateSelected: function(startDate) {
+      if(moment(startDate).isAfter(moment())) {
+        this.menu = false;
+        this.invalidFilter = true;
+        return;
+      }
+      if(moment(startDate).isAfter(moment(this.endDateConfig))) {
+        this.menu = false;
+        this.invalidFilter = true;
+        return;
+      } else {
+        this.invalidFilter = false;
+      }
+      this.$refs['menu'].save(startDate);
+    },
+    onEndDateSelected: function(endDate) {
+      if(moment(endDate).isAfter(moment())) {
+        this.menu2 = false;
+        this.invalidFilter = true;
+        return;
+      }
+      if(moment(this.startDateConfig).isAfter(moment(endDate))) {
+        this.menu2 = false;
+        this.invalidFilter = true;
+        return;
+      } else {
+        this.invalidFilter = false;
+      }
+      this.$refs['menu2'].save(endDate);
+    },
+    onFilterSet: async function() {
+      this.showFilter = false;
+      if(this.stash.length > 0) {
+        this.isLoading = true;
+        await this.query(this.stash);
+        this.isLoading = false;
+      }
+    },
+    query: async function(stash) {
       if(stash.length < 32) {
         return;
       }
@@ -258,20 +497,23 @@ export default {
       setTimeout(()=>{
         this.inDelay = false;
       }, 1000);
-      this.isLoading = true;
+
       this.showSnakeBar = false;
       if(stash.startsWith('1')) {
         this.coinName = 'DOT';
       } else if(stash.charCodeAt(0) >= 65 && stash.charCodeAt(0) <= 90) {
         this.coinName = 'KSM';
       }
-      const eraRewards = await this.yaohsin.getStashRewards(stash, {coin: this.coinName});
+      const eraRewards = await this.yaohsin.getStashRewardsCollector(stash, {coin: this.coinName, startDate: this.startDateConfig,
+      endDate: this.endDateConfig, startBalance: this.startBalance, currency: this.selectedCurrency});
       if(eraRewards !== undefined) {
         this.isStashValid = true;
         this.saveQueriedRecords(stash);
         this.calcTotalRewards(eraRewards);
         this.eraRewards = this.mergeEraRewards(eraRewards.eraRewards);
+        console.log(this.eraRewards);
         this.stash = eraRewards.stash;
+        this.totalInFiat = eraRewards.totalInFiat;
       } else {
         this.showSnakeBar = true;
         this.isStashValid = false;
@@ -285,6 +527,39 @@ export default {
           return acc;
         }, 0);
       }
+      this.eraRewardHeaders = this.eraRewardHeaders.map((header)=>{
+        if(header.text.startsWith("Price")) {
+          header.text = `Price (${this.selectedCurrency})`;
+        }
+        else if(header.text.startsWith('Total')) {
+          header.text = `Total (${this.selectedCurrency})`;
+        }
+        return header;
+      });
+    },
+    onDownloadSrcCsv: async function() {
+      if(this.stash.startsWith('1')) {
+        this.coinName = 'DOT';
+      } else if(this.stash.charCodeAt(0) >= 65 && this.stash.charCodeAt(0) <= 90) {
+        this.coinName = 'KSM';
+      }
+      await this.yaohsin.getStashRewardsCollectorCsv(this.stash, {coin: this.coinName});
+    },
+    onDownloadSrcJson: async function() {
+      if(this.stash.startsWith('1')) {
+        this.coinName = 'DOT';
+      } else if(this.stash.charCodeAt(0) >= 65 && this.stash.charCodeAt(0) <= 90) {
+        this.coinName = 'KSM';
+      }
+      await this.yaohsin.getStashRewardsCollectorJson(this.stash, {coin: this.coinName});
+    },
+  },
+  watch: {
+    selectedStash: async function(stash) {
+      this.startDateConfig = moment('2020-01-01').format("YYYY-MM-DD");
+      this.endDateConfig = moment().format("YYYY-MM-DD");
+      this.isLoading = true;
+      await this.query(stash);
       this.isLoading = false;
     }
   },
@@ -347,10 +622,11 @@ export default {
   padding-left: 8px;
 }
 .era-caption {
-  padding-left: 12px;
+  // padding-left: 12px;
   display: inline-block;
 }
-.total-reward {
+.total-rewards {
+  padding-right: 12px;
   display: inline-block;
 }
 
@@ -378,4 +654,22 @@ export default {
     background-color:#61ba89;
     color: #fafafa;
   }
+
+  .date-picker {
+    margin-left: 16px !important;
+    margin-right: 16px !important;
+  }
+
+  ::v-deep .v-select__selections {
+    padding-left: 8px;
+  }
+  ::v-deep .v-input input {
+    padding-left: 8px;
+  }
+
+  .help-text {
+    margin-left:4px;
+    margin-bottom: 8px; 
+  }
+
 </style>
