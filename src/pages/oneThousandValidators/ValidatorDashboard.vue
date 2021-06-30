@@ -463,11 +463,11 @@ export default {
 }
 .bonding {
   color: #5f6368;
-  font-size: 8px;
+  font-size: 10px;
 }
 .detail {
   display: inline-block;
-  font-size: 6px;
+  font-size: 10px;
 }
 #validator-id {
   display: inline-block;
