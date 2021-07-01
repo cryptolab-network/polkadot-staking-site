@@ -28,8 +28,6 @@
 <script>
 import Vue from 'vue'
 import VueMeta from 'vue-meta'
-import MetaInfo from 'vue-meta-info';
-Vue.use(MetaInfo);
 Vue.use(VueMeta, {
   // optional pluginOptions
   refreshOnceOnNavigation: true
