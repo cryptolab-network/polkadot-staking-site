@@ -93,9 +93,16 @@ export default {
           this.rewardDistribution[i] += reward.amount;
         }
       });
+      let maxRewards = 0;
       this.rewardDistribution = this.rewardDistribution.map((dist)=>{
+        if(dist > maxRewards) {
+          maxRewards = dist;
+        }
         return dist.toFixed(3);
       });
+      if(maxRewards === 0) {
+        maxRewards = 1;
+      }
       this.$refs['reward-distribution'].updateSeries([{
         data: this.rewardDistribution,
       }], false, true);
@@ -109,6 +116,7 @@ export default {
         yaxis: [
           {
             min: 0,
+            max: maxRewards,
             title: {
               text: this.coinName,
             },
