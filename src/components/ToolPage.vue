@@ -22,9 +22,13 @@ export default {
         route: '/tools/dotVN',
         coinName: 'DOT',
       },{
-        displayName: 'Polkadot / Kusama Staking Rewards',
+        displayName: 'Polkadot Staking Rewards',
         route: '/tools/dotSR',
         coinName: 'DOT',
+      },{
+        displayName: 'Kusama Staking Rewards',
+        route: '/tools/dotSR',
+        coinName: 'KSM',
       },{
         displayName: 'Kusama One Thousand Validator Monitor',
         route: '/tools/oneKValidators',
