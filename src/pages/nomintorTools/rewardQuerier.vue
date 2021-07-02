@@ -5,7 +5,7 @@
         <div class='md-toolbar-section-start search-bar '> 
           <md-icon id="search-icon">search</md-icon>
           <md-field>
-            <md-autocomplete md-input-placeholder="Search for Stash ID" v-model="selectedStash" :md-options="historicalQuery"></md-autocomplete>
+            <md-autocomplete md-input-placeholder="Search for a Stash ID (Polkadot/Kusama)" v-model="selectedStash" :md-options="historicalQuery"></md-autocomplete>
           </md-field>
         </div>
         <div class='md-toolbar-section-end'> 
@@ -556,10 +556,11 @@ export default {
   },
   watch: {
     selectedStash: async function(stash) {
+      this.selectedStash = stash.trim();
       this.startDateConfig = moment('2020-01-01').format("YYYY-MM-DD");
       this.endDateConfig = moment().format("YYYY-MM-DD");
       this.isLoading = true;
-      await this.query(stash);
+      await this.query(this.selectedStash);
       this.isLoading = false;
     }
   },
