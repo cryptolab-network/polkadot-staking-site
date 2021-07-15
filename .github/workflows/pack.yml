@@ -65,7 +65,7 @@ jobs:
           aws-region: eu-central-1
       - name: Upload artifacts to S3 with AWS CLI
         run: |
-          aws s3 cp ./dist-without-markdown s3://${{ secrets.S3_BUCKET }} --delete
+          aws s3 cp ./dist-without-markdown s3://${{ secrets.S3_BUCKET }}
      # Trigger code deploy 
       - name: Create CodeDeploy Deployment
         id: deploy
