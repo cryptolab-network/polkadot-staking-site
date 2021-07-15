@@ -1,4 +1,5 @@
 #!/bin/bash
-cd /home/ubuntu/polkadot-staking-site
+cd /home/ubuntu/backend
+touch hello2
 #cd ./dist
 #cp -r . ../../cryptolab-web-server/www/static
