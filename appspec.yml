@@ -6,7 +6,7 @@ files:
 hooks:
   AfterInstall:
    - location: scripts/install_app_dependencies
-     timeout: 1800000
+     timeout: 1200000
      runas: root
   ApplicationStart:
    - location: scripts/copy_dist
