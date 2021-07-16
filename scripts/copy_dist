@@ -1,5 +1,4 @@
 #!/bin/bash
 cd /home/ubuntu/backend
-touch hello2
-#cd ./dist
-#cp -r . ../../cryptolab-web-server/www/static
+aws s3 sync s3://polkadot-staking-site ./www/static --delete
+

@@ -1,5 +1,0 @@
-#!/bin/bash
-cd /home/ubuntu/backend
-touch hello
-#npm install
-#npm run build
